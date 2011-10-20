@@ -23,8 +23,8 @@ namespace BunknotesApp
 
 		public override void ViewWillAppear (bool animated)
 		{
-			_currentCamperStr = config.LastCamper;
-			_currentCabinStr = config.LastCabin;
+			_currentCamperStr = config.LastCamper.ToString();
+			_currentCabinStr = config.LastCabin.ToString();
 			
 			_chooseCamper = new StyledStringElement ("Camper",_currentCamperStr);
 			_chooseCamper.Accessory = UITableViewCellAccessory.DisclosureIndicator;

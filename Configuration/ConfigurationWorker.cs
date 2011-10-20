@@ -10,11 +10,13 @@ namespace BunknotesApp
 	{
 		private const string cLogins = "Logins";
 		private const string cLastUsedUserName = "LastUsedUserName";
+		private const string cLastUsedCabinId = "LastCabinId";
 		private const string cLastUsedCabin = "LastCabin";
 		private const string cLastUsedCamper = "LastCamper";
 		private Dictionary<string, string> loginsDict;
-		
-		public static readonly UIColor DefaultBtnColor = UIColor.FromRGB(237, 230, 178);
+		public static readonly UIColor DefaultBtnColor = UIColor.FromRGB (237, 230, 178);
+		public static readonly UIColor DefaultNavbarTint = UIColor.FromRGB (222, 165, 60);
+			
 		public ConfigurationWorker ()
 		{
 			loginsDict = new Dictionary<string, string> ();
@@ -55,23 +57,27 @@ namespace BunknotesApp
 			}
 		}
 		
-		public string LastCamper {
+		public Camper LastCamper {
 			get {
-				return  NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedCamper);
+				var camper = NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedCamper).Split ('|');
+				return camper.Length == 2 ? 
+					new Camper{FirstName = camper [0], LastName = camper [1]} :
+					new Camper();
 			}
 			set {
-				NSUserDefaults.StandardUserDefaults.SetString (value, cLastUsedCamper);
-				NSUserDefaults.StandardUserDefaults.Init ();
+				NSUserDefaults.StandardUserDefaults.SetString (value.FirstName + "|" + value.LastName, cLastUsedCamper);
 			}
 		}
 		
-		public string LastCabin {
+		public Cabin LastCabin {
 			get {
-				return NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedCabin);
+				var id = NSUserDefaults.StandardUserDefaults.IntForKey (cLastUsedCabinId);
+				var name = NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedCabin);
+				return new Cabin{Id = id, Name = name};
 			}
 			set {
-				NSUserDefaults.StandardUserDefaults.SetString (value, cLastUsedCabin);
-				NSUserDefaults.StandardUserDefaults.Init ();
+				NSUserDefaults.StandardUserDefaults.SetInt (value.Id, cLastUsedCabinId);
+				NSUserDefaults.StandardUserDefaults.SetString (value.Name, cLastUsedCabin);
 			}
 		}
 		

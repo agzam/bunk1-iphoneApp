@@ -23,6 +23,7 @@ namespace BunknotesApp
 		{
 			base.LoadView ();
 			TableView.BackgroundColor = UIColor.Clear;
+			NavigationController.NavigationBar.TintColor = ConfigurationWorker.DefaultNavbarTint;
 			ParentViewController.View.BackgroundColor = UIColor.FromPatternImage (UIImage.FromBundle ("Images/bunk1background.jpg"));
 		}
 		

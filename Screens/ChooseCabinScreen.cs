@@ -10,7 +10,7 @@ namespace BunknotesApp
 {
 	public class ChooseCabinScreen : ControllerBase
 	{
-		private List<string> _cabinsList = new List<string> ();
+		private List<Cabin> _cabinsList = new List<Cabin> ();
 		private ConfigurationWorker config = new ConfigurationWorker ();
 
 		public ChooseCabinScreen ()
@@ -21,8 +21,7 @@ namespace BunknotesApp
 			AutoHideSearch = true;
 			
 			_restManager.RequestCompleted += (sender, e) => {
-				var cabins = ((e as CabinsRequestArgs).cabins).Select (x => x.Name).ToList ();
-				_cabinsList.AddRange (cabins);
+				_cabinsList = ((e as CabinsRequestArgs).cabins).ToList ();
 				Root = GetRoot ();
 			};
 			_restManager.GetCabins ();	
@@ -39,7 +38,7 @@ namespace BunknotesApp
 		{
 			return new RootElement ("Select camper"){
 				new Section (){
-						from c in _cabinsList select (Element)new StyledStringElement (c)
+						from c in _cabinsList select (Element)new StyledStringElement (c.ToString())
 					}
 				};	
 		}

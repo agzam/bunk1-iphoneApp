@@ -87,6 +87,8 @@
     <Compile Include="Screens\ControllerBase.cs" />
     <Compile Include="Screens\SendingOptionsScreen.cs" />
     <Compile Include="Screens\ChooseCabinScreen.cs" />
+    <Compile Include="Screens\AddNewCamperScreen.cs" />
+    <Compile Include="Helpers\StyledStringElementWithId.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
