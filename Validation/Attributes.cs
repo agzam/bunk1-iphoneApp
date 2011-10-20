@@ -7,6 +7,8 @@ namespace Bunk1DataAnnotations
 	public class ValidationAttribute : Attribute
 	{
 		public string ErrorMessage { get; set; }
+
+		public string DefaultValue { get; set; }
 	
 		public virtual bool Validate (Object sender)
 		{
@@ -18,10 +20,16 @@ namespace Bunk1DataAnnotations
 	{
 		public override bool Validate (Object sender)
 		{
-			var element = sender as EntryElement;
-			if (element == null) return true;
-			element.FetchValue ();
-			if (!string.IsNullOrWhiteSpace (element.Value)) return true;
+			string val = "";
+			if ((sender as EntryElement) != null) {
+				((EntryElement) sender).FetchValue ();
+				val = ((EntryElement)sender).Value;
+			}
+			else if((sender as StringElement) != null){
+				val = ((StringElement)sender).Value;					
+			}
+			
+			if (!string.IsNullOrWhiteSpace(val)) return true;
 			
 			var alert = new UIAlertView{ Message = ErrorMessage };
 			alert.AddButton ("OK");

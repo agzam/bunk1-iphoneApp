@@ -7,6 +7,7 @@ using BunknotesApp.Helpers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using System.Linq;
 
 namespace BunknotesApp
 {
@@ -14,17 +15,35 @@ namespace BunknotesApp
 	{
 		public List<Camper> campers;
 	}
+
+	public class CabinsRequestArgs : EventArgs
+	{
+		public List<Cabin> cabins;
+	}
 	
 	public class RestManager
 	{
 		const string clientAddress = "http://services.bunk1.com";
 		private RestClient _client;
+		private static List<Camper> _campersList;
+		private static List<Cabin> _cabinsList;
 		
 		public static bool Authenticated{ get; set; }
 
 		public static AuthenticationResult AuthenticationResult{ get; set; }
 		
-		public event EventHandler RequestCompleted;
+		private EventHandler _requestCompleted = delegate{};
+		public event EventHandler RequestCompleted
+		{
+			add {
+				if (_requestCompleted == null || !_requestCompleted.GetInvocationList ().Contains (value)) {
+					_requestCompleted += value;
+				}
+			}
+			remove {
+				_requestCompleted -= value;
+			}
+		}
 			
 		public RestManager ()
 		{
@@ -84,7 +103,7 @@ namespace BunknotesApp
 				case ResponseResultType.Successful:
 					RestManager.Authenticated = true;
 					RestManager.AuthenticationResult = authResult;
-					RequestCompleted.Invoke (this, null);
+					_requestCompleted.Invoke(this,null);
 					break;
 				default:
 					break;
@@ -93,16 +112,44 @@ namespace BunknotesApp
 			}, parameters, "Connecting to bunk1");
 			
 		}
+
+		void HandleRequestCompleted (object sender, EventArgs e)
+		{
+			
+		}
 		
 		public void GetCampers ()
 		{
 			if (!RestManager.Authenticated)
 				throw new InvalidOperationException ();
 			var auth = RestManager.AuthenticationResult;
+			
+			if (_campersList != null)
+				_requestCompleted.Invoke (this, new CampersRequestArgs{campers = _campersList});
+			
 			string httpLink = string.Format ("BunkNotes/GetBnoteUserNameSent/{0}/{1}/{2}", auth.CampId, auth.UserId, auth.Token);
 			GetRequest (httpLink, response => {
-				var campersResult = JsonParser.ParseCampers (response.Content);
-				RequestCompleted.Invoke (this, new CampersRequestArgs{campers = campersResult});
+				_campersList = new List<Camper> ();
+				_campersList = JsonParser.ParseCampers (response.Content);
+				_requestCompleted.Invoke (this, new CampersRequestArgs{campers = _campersList});
+			}, null, "Getting list of campers");
+		}
+		
+		public void GetCabins ()
+		{
+			if (!RestManager.Authenticated)
+				throw new InvalidOperationException ();
+			
+			var auth = RestManager.AuthenticationResult;
+			
+			if (_cabinsList != null)
+				_requestCompleted.Invoke (this, new CabinsRequestArgs{cabins = _cabinsList});
+			
+			string httpLink = string.Format ("Cabins/GetMobileCampCabins/{0}/{1}", auth.CampId, auth.Token);
+			GetRequest (httpLink, response => {
+				_cabinsList = new List<Cabin> ();
+				_cabinsList = JsonParser.ParseCabins (response.Content);
+				_requestCompleted.Invoke (this, new CabinsRequestArgs{cabins = _cabinsList});
 			}, null, "Getting list of campers");
 		}
 	}

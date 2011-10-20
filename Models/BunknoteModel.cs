@@ -16,7 +16,7 @@ namespace BunknotesApp
 		
 		public string Message { get; set; }
 		
-		public string Picture {get;set;}
+		public string Picture { get; set; }
 	}
 	
 	public class User
@@ -25,16 +25,11 @@ namespace BunknotesApp
 
 		int CampId { get; set; }
 		
-		string Password { get; set;}
+		string Password { get; set; }
 	}
 	
-	public class Camper
-	{
-		public int CabinId {get;set;}
-		
-		public string LastName { get; set; }
 
-		public string FirstName { get; set; }
-	}
+	
+
 }
 

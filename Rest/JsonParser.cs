@@ -30,20 +30,48 @@ namespace BunknotesApp
 		{
 			if (string.IsNullOrWhiteSpace (jsonString))
 				return null;
-			var campers = new List<Camper>();
+			var campers = new List<Camper> ();
 			var jsonOb = JsonValue.Parse (jsonString);
 			foreach (JsonValue item  in jsonOb) {
-				if (item.ContainsKey("CamperBunk") && item.ContainsKey("CamperIndex") && item.ContainsKey("CamperName")) {
-					var nameStrings = item["CamperIndex"].ToString().Split('|');
-					campers.Add(new Camper{
-						CabinId = item["CamperBunk"],
-						FirstName = nameStrings[0].Replace("\"",""),
-						LastName = nameStrings[1].Replace("\"","")
+				if (item.ContainsKey ("CamperBunk") && item.ContainsKey ("CamperIndex") && item.ContainsKey ("CamperName")) {
+					if (!item.ContainsKey ("CamperIndex") 
+						|| string.IsNullOrWhiteSpace (item ["CamperBunk"].ToString ().Replace ("\"", "")))
+						continue;						
+					
+					var nameStrings = item ["CamperIndex"].ToString ().Split ('|');
+					
+					campers.Add (new Camper{
+						CabinId = item ["CamperBunk"],
+						FirstName = nameStrings [0].Replace ("\"", ""),
+						LastName = nameStrings [1].Replace ("\"", "")
 					});
 				}	
 			}
 			
 			return campers;
+		}
+		
+		public static List<Cabin> ParseCabins (string jsonString)
+		{
+			if (string.IsNullOrWhiteSpace (jsonString))
+				return null;
+						
+			var cabins = new List<Cabin> ();
+			var jsonOb = JsonValue.Parse (jsonString);
+			foreach (JsonValue item  in jsonOb) {
+				if (item.ContainsKey ("Bunk_ID") && item.ContainsKey ("Bunk_Name")) {
+					if (!item.ContainsKey ("Bunk_ID") 
+						|| string.IsNullOrWhiteSpace (item ["Bunk_Name"].ToString ().Replace ("\"", "")))
+						continue;
+					
+					cabins.Add (new Cabin{
+						Id = item ["Bunk_ID"],
+						Name = item ["Bunk_Name"],
+					});
+				}	
+			}
+			
+			return cabins;
 		}
 	}
 }

@@ -68,11 +68,6 @@
     <Compile Include="MainWindow.xib.designer.cs">
       <DependentUpon>MainWindow.xib</DependentUpon>
     </Compile>
-    <Compile Include="LoginScreen.cs" />
-    <Compile Include="ControllerBase.cs" />
-    <Compile Include="SendingOptionsScreen.cs" />
-    <Compile Include="ChooseCamperScreen.cs" />
-    <Compile Include="BunknoteModel.cs" />
     <Compile Include="Validation\Attributes.cs" />
     <Compile Include="Validation\Validator.cs" />
     <Compile Include="Validation\IValidator.cs" />
@@ -84,6 +79,14 @@
     <Compile Include="Helpers\MessageBox.cs" />
     <Compile Include="Helpers\AlertView.cs" />
     <Compile Include="Rest\AuthenticationResult.cs" />
+    <Compile Include="Models\Camper.cs" />
+    <Compile Include="Models\Cabin.cs" />
+    <Compile Include="Models\BunknoteModel.cs" />
+    <Compile Include="Screens\ChooseCamperScreen.cs" />
+    <Compile Include="Screens\LoginScreen.cs" />
+    <Compile Include="Screens\ControllerBase.cs" />
+    <Compile Include="Screens\SendingOptionsScreen.cs" />
+    <Compile Include="Screens\ChooseCabinScreen.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -95,6 +98,8 @@
     <Folder Include="Configuration\" />
     <Folder Include="Rest\" />
     <Folder Include="Helpers\" />
+    <Folder Include="Models\" />
+    <Folder Include="Screens\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Images\bunk1background.jpg" />

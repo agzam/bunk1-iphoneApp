@@ -32,7 +32,7 @@ namespace BunknotesApp {
 		}
 		
 		[MonoTouch.Foundation.Connect("navigation")]
-		public MonoTouch.UIKit.UINavigationController navigation {
+		private MonoTouch.UIKit.UINavigationController navigation {
 			get {
 				this.__mt_navigation = ((MonoTouch.UIKit.UINavigationController)(this.GetNativeField("navigation")));
 				return this.__mt_navigation;
