@@ -24,12 +24,10 @@ namespace BunknotesApp
 			var addBtn = new UIBarButtonItem (UIBarButtonSystemItem.Add, addBtnClickHandler);
 			NavigationItem.SetRightBarButtonItem (addBtn, animated:true);
 			
-			_restManager.RequestCompleted += (sender, e) => {
-				var campers = ((e as CampersRequestArgs).campers).ToList ();
+			_restManager.GetCampers (campers => {
 				_campersList.AddRange (campers);
 				Root = GetRoot ();
-			};
-			_restManager.GetCampers ();	
+			});	
 		}
 		
 		public override void Selected (NSIndexPath indexPath)
@@ -38,21 +36,16 @@ namespace BunknotesApp
 			var selected = _campersList [indexPath.Row];
 			
 			config.LastCamper = selected;
-			_restManager.RequestCompleted += (sender, e) => {
-				var cabin = ((e as CabinsRequestArgs).cabins).FirstOrDefault(c=> c.Id == selected.CabinId);
-				if (cabin != null) {
-					config.LastCabin = cabin;
-				}
-				NavigationController.PopViewControllerAnimated (true);	
-			};
-			_restManager.GetCabins ();
+			var cabin = _restManager.GetCabinById (selected.CabinId);
+			config.LastCabin = cabin;
+			NavigationController.PopViewControllerAnimated (animated:true);	
 		}
 		
 		private RootElement GetRoot ()
 		{
 			return new RootElement ("Select camper"){
 				new Section (){
-						from c in _campersList select (Element)new StyledStringElement (c.ToString())
+						from c in _campersList select (Element)new StyledStringElement (c.ToString ())
 					}
 				};	
 		}

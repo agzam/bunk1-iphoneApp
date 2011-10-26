@@ -39,12 +39,11 @@ namespace BunknotesApp
 		{
 			if (!Validate()) return;
 			
-			_restManager.RequestCompleted += (sender, e) => {
+			_restManager.Authenticate(userName.Value, password.Value, ()=>{
 				if (saveCredentials.Value) config.SaveCurrentLogin(userName.Value, password.Value);	
 				config.LastUsedUsername = userName.Value;
 				NavigationController.PushViewController (new SendingOptionsScreen (), false);
-			};
-			_restManager.Authenticate(userName.Value, password.Value);
+			});
 
 			if (!saveCredentials.Value) return;
 			

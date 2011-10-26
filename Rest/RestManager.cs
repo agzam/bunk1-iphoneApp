@@ -33,8 +33,8 @@ namespace BunknotesApp
 		public static AuthenticationResult AuthenticationResult{ get; set; }
 		
 		private EventHandler _requestCompleted = delegate{};
-		public event EventHandler RequestCompleted
-		{
+
+		public event EventHandler RequestCompleted {
 			add {
 				if (_requestCompleted == null || !_requestCompleted.GetInvocationList ().Contains (value)) {
 					_requestCompleted += value;
@@ -50,12 +50,8 @@ namespace BunknotesApp
 			_client = new RestClient (clientAddress);
 		}
 	
-		private void GetRequest (string address, Action<RestResponse> callback, 
-			Dictionary<string, string> parameters = null, string activityIndicatorMessage = "")
+		private Task<RestResponse> RequestAsync (string address, Dictionary<string, string> parameters = null, string activityIndicatorMessage = "")
 		{
-			if (callback == null)
-				throw new ArgumentException ("callback function required");
-			
 			var request = new RestRequest (address, Method.GET);
 			
 			if (parameters != null) {
@@ -65,28 +61,27 @@ namespace BunknotesApp
 			}
 			
 			ActivityIndicatorAlertView activityIndicator = string.IsNullOrWhiteSpace (activityIndicatorMessage) 
-				? null : ActivityIndicatorAlertView.Show (activityIndicatorMessage);
+				? null : ActivityIndicatorAlertView.Show (activityIndicatorMessage);	
 			
-			var bw = new BackgroundWorker ();
-			bw.DoWork += (sender, e) => {
-				e.Result = _client.Execute (request);
-			};
-			bw.RunWorkerCompleted += (sender, e) => {
-				if (activityIndicator != null)
-					activityIndicator.Hide (true);
-				callback.Invoke (e.Result as RestResponse);
-			};
-			bw.RunWorkerAsync ();
+			var task = Task<RestResponse>.Factory.StartNew (() => {
+				return _client.Execute (request);
+			});
+			task.ContinueWith (t => {
+				activityIndicator.Hide (animated:true);
+			});
+			
+			return task;
 		}
 		
-		public void Authenticate (string username, string password)
+		public void Authenticate (string username, string password, Action callback)
 		{
 			var parameters = new Dictionary<string, string>{ {"login",username}, {"pass",password}  };
 			RestManager.Authenticated = false;
 			RestManager.AuthenticationResult = null;
 			
-			GetRequest ("Authentications/CheckBunkNotesMobileAuthentication", response => {
-				var authResult = JsonParser.ParseAuthenticationString (response.Content);
+			var request = RequestAsync ("Authentications/CheckBunkNotesMobileAuthentication", parameters, "Connecting to bunk1");
+			request.ContinueWith (t => {
+				var authResult = JsonParser.ParseAuthenticationString (t.Result.Content);
 				switch (authResult.Result) {
 				case ResponseResultType.BadRequest: 
 					MessageBox.Show ("Invalid Username or Password,\nPlease retry");
@@ -103,13 +98,12 @@ namespace BunknotesApp
 				case ResponseResultType.Successful:
 					RestManager.Authenticated = true;
 					RestManager.AuthenticationResult = authResult;
-					_requestCompleted.Invoke(this,null);
+					callback.Invoke ();
 					break;
 				default:
 					break;
 				}
-				
-			}, parameters, "Connecting to bunk1");
+			}, TaskScheduler.FromCurrentSynchronizationContext ());
 			
 		}
 
@@ -118,7 +112,7 @@ namespace BunknotesApp
 			
 		}
 		
-		public void GetCampers ()
+		public void GetCampers (Action<List<Camper>> callback)
 		{
 			if (!RestManager.Authenticated)
 				throw new InvalidOperationException ();
@@ -128,14 +122,15 @@ namespace BunknotesApp
 				_requestCompleted.Invoke (this, new CampersRequestArgs{campers = _campersList});
 			
 			string httpLink = string.Format ("BunkNotes/GetBnoteUserNameSent/{0}/{1}/{2}", auth.CampId, auth.UserId, auth.Token);
-			GetRequest (httpLink, response => {
+			var request = RequestAsync (httpLink, null, "Getting list of campers");
+			request.ContinueWith (t => {
 				_campersList = new List<Camper> ();
-				_campersList = JsonParser.ParseCampers (response.Content);
-				_requestCompleted.Invoke (this, new CampersRequestArgs{campers = _campersList});
-			}, null, "Getting list of campers");
+				_campersList = JsonParser.ParseCampers (t.Result.Content);
+				callback.Invoke (_campersList);
+			}, TaskScheduler.FromCurrentSynchronizationContext ());
 		}
 		
-		public void GetCabins ()
+		public Task<RestResponse> GetCabins (Action<List<Cabin>> callback)
 		{
 			if (!RestManager.Authenticated)
 				throw new InvalidOperationException ();
@@ -143,14 +138,49 @@ namespace BunknotesApp
 			var auth = RestManager.AuthenticationResult;
 			
 			if (_cabinsList != null)
-				_requestCompleted.Invoke (this, new CabinsRequestArgs{cabins = _cabinsList});
+				callback.Invoke (_cabinsList);
 			
 			string httpLink = string.Format ("Cabins/GetMobileCampCabins/{0}/{1}", auth.CampId, auth.Token);
-			GetRequest (httpLink, response => {
+			var response = RequestAsync (httpLink, null, "Getting list of campers");
+			response.ContinueWith (t => {
 				_cabinsList = new List<Cabin> ();
-				_cabinsList = JsonParser.ParseCabins (response.Content);
-				_requestCompleted.Invoke (this, new CabinsRequestArgs{cabins = _cabinsList});
-			}, null, "Getting list of campers");
+				_cabinsList = JsonParser.ParseCabins (t.Result.Content);
+				callback.Invoke (_cabinsList);
+			}, TaskScheduler.FromCurrentSynchronizationContext ());
+			
+			return response;
+		}
+		
+		public Cabin GetCabinById (int cabinId)
+		{
+			Cabin result = null;
+			
+			if (!RestManager.Authenticated)
+				throw new InvalidOperationException ();
+			var auth = RestManager.AuthenticationResult;
+			
+			if (_cabinsList != null)
+				result = _cabinsList.FirstOrDefault (x => x.Id == cabinId);
+			if (result != null)
+				return result;
+			
+			var request = new RestRequest (string.Format ("Cabins/GetMobileCampCabins/{0}/{1}", auth.CampId, auth.Token), Method.GET);
+			
+			ActivityIndicatorAlertView activityIndicator;
+			var thread = new Thread (() => activityIndicator = ActivityIndicatorAlertView.Show ("Getting associated bunk"));
+			thread.Start ();
+			var task = Task<RestResponse>.Factory.StartNew (() => {
+				return _client.Execute (request);});
+			
+			task.ContinueWith (t => activityIndicator.Hide (true), TaskScheduler.FromCurrentSynchronizationContext ());
+			
+			task.Wait ();
+			
+			_cabinsList = new List<Cabin> ();
+			_cabinsList = JsonParser.ParseCabins (task.Result.Content);
+			result = _cabinsList.FirstOrDefault (x => x.Id == cabinId);
+			
+			return result;
 		}
 	}
 }

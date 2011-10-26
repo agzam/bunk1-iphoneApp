@@ -3,6 +3,7 @@ using Bunk1DataAnnotations;
 using System.Reflection;
 using System.Linq;
 using MonoTouch.Dialog;
+using MonoTouch.UIKit;
 
 namespace BunknotesApp
 {
@@ -12,7 +13,7 @@ namespace BunknotesApp
 		{
 		}
 		
-		public bool Validate (Object caller)
+		public bool Validate (object caller)
 		{
 			var inf = caller.GetType ();
 			foreach (var field in inf.GetFields(BindingFlags.Instance | BindingFlags.NonPublic)) {

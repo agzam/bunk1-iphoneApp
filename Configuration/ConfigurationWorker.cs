@@ -76,6 +76,11 @@ namespace BunknotesApp
 				return new Cabin{Id = id, Name = name};
 			}
 			set {
+				if (value == null) {
+					NSUserDefaults.StandardUserDefaults.RemoveObject(cLastUsedCabinId);
+					NSUserDefaults.StandardUserDefaults.RemoveObject(cLastUsedCabin);
+					return;
+				}
 				NSUserDefaults.StandardUserDefaults.SetInt (value.Id, cLastUsedCabinId);
 				NSUserDefaults.StandardUserDefaults.SetString (value.Name, cLastUsedCabin);
 			}

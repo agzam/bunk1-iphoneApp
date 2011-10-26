@@ -17,14 +17,13 @@ namespace BunknotesApp
 		{
 			Style = UITableViewStyle.Plain;
 			EnableSearch = true;
-			SearchPlaceholder = "Find cabin";
+			SearchPlaceholder = "Find bunk";
 			AutoHideSearch = true;
 			
-			_restManager.RequestCompleted += (sender, e) => {
-				_cabinsList = ((e as CabinsRequestArgs).cabins).ToList ();
+			_restManager.GetCabins(c => {
+				_cabinsList = c;
 				Root = GetRoot ();
-			};
-			_restManager.GetCabins ();	
+			});	
 		}
 		
 		public override void Selected (NSIndexPath indexPath)
@@ -36,7 +35,7 @@ namespace BunknotesApp
 		
 		private RootElement GetRoot ()
 		{
-			return new RootElement ("Select camper"){
+			return new RootElement ("Select bunk"){
 				new Section (){
 						from c in _cabinsList select (Element)new StyledStringElement (c.ToString())
 					}
