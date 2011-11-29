@@ -3,7 +3,7 @@ using MonoTouch.UIKit;
 using MonoTouch.Foundation;
 using System.Drawing;
 
-namespace BunknotesApp.Helpers
+namespace Bunk1.Helpers
 {
 	[Register("ActivityIndicatorAlertView")]
 	public class ActivityIndicatorAlertView : UIAlertView
@@ -64,6 +64,7 @@ namespace BunknotesApp.Helpers
 		{
 			//--- if the control hasn't been setup yet
 			if (this._activityIndicator == null) {
+			
 				//--- if we have a message
 				if (!string.IsNullOrWhiteSpace (this._message)) {
 					this._lblMessage = new UILabel (new RectangleF (20, 10, rect.Width - 40, 33));

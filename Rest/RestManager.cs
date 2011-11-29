@@ -3,11 +3,12 @@ using RestSharp;
 using MonoTouch.UIKit;
 using System.Json;
 using System.Collections.Generic;
-using BunknotesApp.Helpers;
+using Bunk1.Helpers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Linq;
+using MonoTouch.Foundation;
 
 namespace BunknotesApp
 {
@@ -24,6 +25,8 @@ namespace BunknotesApp
 	public class RestManager
 	{
 		const string clientAddress = "http://services.bunk1.com";
+		//const string clientAddress = "http://192.168.1.31/Bunk1.RestServices/";
+		
 		private RestClient _client;
 		private static List<Camper> _campersList;
 		private static List<Cabin> _cabinsList;
@@ -64,6 +67,7 @@ namespace BunknotesApp
 				? null : ActivityIndicatorAlertView.Show (activityIndicatorMessage);	
 			
 			var task = Task<RestResponse>.Factory.StartNew (() => {
+				Thread.Sleep(5000);
 				return _client.Execute (request);
 			});
 			task.ContinueWith (t => {
@@ -75,6 +79,8 @@ namespace BunknotesApp
 		
 		public void Authenticate (string username, string password, Action callback)
 		{
+			if(!Reachability.ConnectionAvailible()) return;
+				
 			var parameters = new Dictionary<string, string>{ {"login",username}, {"pass",password}  };
 			RestManager.Authenticated = false;
 			RestManager.AuthenticationResult = null;
@@ -82,6 +88,10 @@ namespace BunknotesApp
 			var request = RequestAsync ("Authentications/CheckBunkNotesMobileAuthentication", parameters, "Connecting to bunk1");
 			request.ContinueWith (t => {
 				var authResult = JsonParser.ParseAuthenticationString (t.Result.Content);
+				if(authResult == null){
+					MessageBox.Show("Unknown authentication error. Please try again.\nIf error repeats several times\ncontact bunk1 tech support");
+					return;
+				}
 				switch (authResult.Result) {
 				case ResponseResultType.BadRequest: 
 					MessageBox.Show ("Invalid Username or Password,\nPlease retry");
@@ -106,16 +116,20 @@ namespace BunknotesApp
 			}, TaskScheduler.FromCurrentSynchronizationContext ());
 			
 		}
-
-		void HandleRequestCompleted (object sender, EventArgs e)
-		{
+		
+		private void CheckAuthenticationToken(){
 			
+			var address = string.Format("Authentications/CheckAuthenticationbyToken/{0}",AuthenticationResult.Token);
+			var request = new RestRequest (address, Method.GET);
+			var result = JsonParser.ParseAuthenticationTokenCheck(_client.Execute (request).Content);
+			if (!result) {
+				Authenticate(ConfigurationWorker.LastUsedUsername, ConfigurationWorker.LastUsedPassword, null);
+			}
 		}
 		
 		public void GetCampers (Action<List<Camper>> callback)
 		{
-			if (!RestManager.Authenticated)
-				throw new InvalidOperationException ();
+			CheckAuthenticationToken();
 			var auth = RestManager.AuthenticationResult;
 			
 			if (_campersList != null)
@@ -124,7 +138,6 @@ namespace BunknotesApp
 			string httpLink = string.Format ("BunkNotes/GetBnoteUserNameSent/{0}/{1}/{2}", auth.CampId, auth.UserId, auth.Token);
 			var request = RequestAsync (httpLink, null, "Getting list of campers");
 			request.ContinueWith (t => {
-				_campersList = new List<Camper> ();
 				_campersList = JsonParser.ParseCampers (t.Result.Content);
 				callback.Invoke (_campersList);
 			}, TaskScheduler.FromCurrentSynchronizationContext ());
@@ -132,8 +145,7 @@ namespace BunknotesApp
 		
 		public Task<RestResponse> GetCabins (Action<List<Cabin>> callback)
 		{
-			if (!RestManager.Authenticated)
-				throw new InvalidOperationException ();
+			CheckAuthenticationToken();
 			
 			var auth = RestManager.AuthenticationResult;
 			
@@ -181,6 +193,79 @@ namespace BunknotesApp
 			result = _cabinsList.FirstOrDefault (x => x.Id == cabinId);
 			
 			return result;
+		}
+		
+		private ImageUploadResult SendImage (UIImage image)
+		{
+			var address = "BunkNotes/InsertBNoteImage?CampId={CampId}&Token={Token}";
+			var request = new RestRequest (address, Method.POST);
+			request.AddUrlSegment("CampId",RestManager.AuthenticationResult.CampId.ToString());
+			request.AddUrlSegment("Token",RestManager.AuthenticationResult.Token);
+			
+			ActivityIndicatorAlertView activityIndicator;
+			var thread = new Thread (() => activityIndicator = ActivityIndicatorAlertView.Show ("Sending the image"));
+			thread.Start ();			
+			ImageUploadResult result = null;
+			
+			using (NSData imageData = image.AsJPEG()) {
+				Byte[] imgByteArray = new Byte[imageData.Length];
+				System.Runtime.InteropServices.Marshal.Copy (imageData.Bytes, imgByteArray, 0, Convert.ToInt32 (imageData.Length));
+				request.AddFile ("DataString", imgByteArray, "filename");
+			}
+			
+			var task = Task<RestResponse>.Factory.StartNew (() => {
+				return _client.Execute (request);
+			});
+			task.ContinueWith (t => {
+				activityIndicator.Hide (animated:true);
+			}, TaskScheduler.FromCurrentSynchronizationContext ());
+			task.Wait();
+			result = JsonParser.ImageUploadResult (task.Result.Content);
+			return result;
+		}
+		
+		public void SendBunkNote (string messageText, UIImage image, Action<CreateBunkNoteResult> callback)
+		{
+			if(!Reachability.ConnectionAvailible()) return;
+			CheckAuthenticationToken();
+			var imageServerFilename = "";
+			
+			if (image != null) {
+				var sendImgResult = SendImage (image);
+				if (sendImgResult != null && sendImgResult.Success ) {
+					imageServerFilename = sendImgResult.Filename;	
+				}
+			}
+			
+			var auth = RestManager.AuthenticationResult;
+			
+			var address = "BunkNotes/InsertBunkNotes";
+			var request = new RestRequest (address, Method.POST);
+			request.RequestFormat = DataFormat.Json;
+			request.AddBody (new {
+				BnGuid = "686DB329-20FA-4CE9-88CA-7139E1F6FC0E", 
+				UserID = auth.UserId,
+				CampID = auth.CampId,
+				BunkID = 24595,
+				FName = ConfigurationWorker.LastCamper.FirstName,
+				LName = ConfigurationWorker.LastCamper.LastName,
+				BnFrom = ConfigurationWorker.SentFrom,
+				BnText = messageText,
+				BnBorder = 0,
+				BnReply = 0,
+				BnImageFilename = imageServerFilename,
+				Token = auth.Token
+			});
+			
+			ActivityIndicatorAlertView activityIndicator = ActivityIndicatorAlertView.Show ("Sending Bunknote");	
+			
+			var task = Task<RestResponse>.Factory.StartNew (() => {
+				return _client.Execute (request);
+			});
+			task.ContinueWith (t => {
+				activityIndicator.Hide (animated:true);
+				callback.Invoke (JsonParser.BunkNoteResult (t.Result.Content));
+			}, TaskScheduler.FromCurrentSynchronizationContext ());
 		}
 	}
 }

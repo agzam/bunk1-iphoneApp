@@ -5,7 +5,7 @@ using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 using MonoTouch.Dialog;
 using System.Drawing;
-using BunknotesApp.Helpers;
+using Bunk1.Helpers;
 
 namespace BunknotesApp
 {
@@ -19,6 +19,13 @@ namespace BunknotesApp
 		
 	public partial class AppDelegate:UIApplicationDelegate
 	{	
+		public event EventHandler AppDidEnterBackground;
+		
+		public override void DidEnterBackground (UIApplication application)
+		{
+			AppDidEnterBackground.Invoke(this, EventArgs.Empty);
+		}
+		
 		public static AppDelegate CurrentApp{ get{
 				return ((AppDelegate)UIApplication.SharedApplication.Delegate);
 			}
@@ -31,6 +38,7 @@ namespace BunknotesApp
 			window.AddSubview (navigation.View);
 			
 			var loginScreen = new LoginScreen(){ Autorotate = true };
+			//var loginScreen = new ComposeMessageScreen{ Autorotate = true };
 			
 			navigation.PushViewController (loginScreen, true);
 			

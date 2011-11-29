@@ -2,7 +2,7 @@ using System;
 using MonoTouch.Dialog;
 using MonoTouch.UIKit;
 using MonoTouch.Foundation;
-using BunknotesApp.Helpers;
+using Bunk1.Helpers;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -11,7 +11,6 @@ namespace BunknotesApp
 	public class ChooseCamperScreen : ControllerBase
 	{
 		private List<Camper> _campersList = new List<Camper> ();
-		private ConfigurationWorker config = new ConfigurationWorker ();
 
 		public ChooseCamperScreen ()
 		{
@@ -22,9 +21,19 @@ namespace BunknotesApp
 			
 			EventHandler addBtnClickHandler = (s, a) => NavigationController.PushViewController (new AddNewCamperScreen (), animated:true);
 			var addBtn = new UIBarButtonItem (UIBarButtonSystemItem.Add, addBtnClickHandler);
+			NavigationItem.Title = "Select camper";
 			NavigationItem.SetRightBarButtonItem (addBtn, animated:true);
+		}
+		
+		public override void ViewDidAppear (bool animated)
+		{
+			base.ViewDidAppear (animated);
 			
 			_restManager.GetCampers (campers => {
+				if (campers == null) {
+					SessionExpired();
+					return;
+				}
 				_campersList.AddRange (campers);
 				Root = GetRoot ();
 			});	
@@ -35,9 +44,9 @@ namespace BunknotesApp
 			base.Selected (indexPath);
 			var selected = _campersList [indexPath.Row];
 			
-			config.LastCamper = selected;
+			ConfigurationWorker.LastCamper = selected;
 			var cabin = _restManager.GetCabinById (selected.CabinId);
-			config.LastCabin = cabin;
+			ConfigurationWorker.LastCabin = cabin;
 			NavigationController.PopViewControllerAnimated (animated:true);	
 		}
 		

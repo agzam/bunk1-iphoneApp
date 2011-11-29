@@ -6,24 +6,28 @@ using MonoTouch.UIKit;
 
 namespace BunknotesApp
 {
-	public class ConfigurationWorker
+	public static class ConfigurationWorker
 	{
-		private const string cLogins = "Logins";
-		private const string cLastUsedUserName = "LastUsedUserName";
-		private const string cLastUsedCabinId = "LastCabinId";
-		private const string cLastUsedCabin = "LastCabin";
-		private const string cLastUsedCamper = "LastCamper";
-		private Dictionary<string, string> loginsDict;
-		public static readonly UIColor DefaultBtnColor = UIColor.FromRGB (237, 230, 178);
+		const string cLogins = "Logins";
+		const string cLastUsedUserName = "LastUsedUserName";
+		const string cLastUsedPass = "LastUsedPass";
+		const string cLastUsedCabinId = "LastCabinId";
+		const string cLastUsedCabin = "LastCabin";
+		const string cLastUsedCamper = "LastCamper";
+		const string cSentFrom = "SentFrom";
+		const string cLastMessage = "LastMessage";
+		
+		private static Dictionary<string, string> loginsDict;
+		public static readonly UIColor DefaultBtnColor = UIColor.FromRGB (242, 201, 136);
 		public static readonly UIColor DefaultNavbarTint = UIColor.FromRGB (222, 165, 60);
 			
-		public ConfigurationWorker ()
+		static ConfigurationWorker ()
 		{
 			loginsDict = new Dictionary<string, string> ();
 		}
 		
 		#region private methods
-		private void ReadLoginsFromConfig ()
+		private static void ReadLoginsFromConfig ()
 		{
 			loginsDict = new Dictionary<string, string> ();
 			NSDictionary dic = NSUserDefaults.StandardUserDefaults.DictionaryForKey (cLogins);
@@ -34,7 +38,7 @@ namespace BunknotesApp
 			}
 		}
 		
-		private void SaveLoginsToConfig ()
+		private static void SaveLoginsToConfig ()
 		{
 			var userNames = loginsDict.Keys.SelectMany (x => new object[] {x}).ToArray ();
 			var passwords = loginsDict.Values.SelectMany (x => new object[] {x}).ToArray ();
@@ -47,7 +51,7 @@ namespace BunknotesApp
 		
 		
 		#region public members 
-		public string LastUsedUsername {
+		public static string LastUsedUsername {
 			get {
 				return NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedUserName);
 			}
@@ -57,7 +61,17 @@ namespace BunknotesApp
 			}
 		}
 		
-		public Camper LastCamper {
+		public static string LastUsedPassword {
+			get {
+				return NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedPass);
+			}
+			set {
+				NSUserDefaults.StandardUserDefaults.SetString (value, cLastUsedPass);
+				NSUserDefaults.StandardUserDefaults.Init ();
+			}
+		}
+		
+		public static Camper LastCamper {
 			get {
 				var camper = NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedCamper).Split ('|');
 				return camper.Length == 2 ? 
@@ -69,7 +83,7 @@ namespace BunknotesApp
 			}
 		}
 		
-		public Cabin LastCabin {
+		public static Cabin LastCabin {
 			get {
 				var id = NSUserDefaults.StandardUserDefaults.IntForKey (cLastUsedCabinId);
 				var name = NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedCabin);
@@ -86,13 +100,31 @@ namespace BunknotesApp
 			}
 		}
 		
+		public static string SentFrom{
+			get{
+				return NSUserDefaults.StandardUserDefaults.StringForKey (cSentFrom);
+			}
+			set{
+				NSUserDefaults.StandardUserDefaults.SetString (value, cSentFrom);
+			}
+		}
+		
+		public static string LastMessage{
+			get{
+				return NSUserDefaults.StandardUserDefaults.StringForKey (cLastMessage);
+			}
+			set{
+				NSUserDefaults.StandardUserDefaults.SetString (value, cLastMessage);
+			}
+		}
+		
 		public static void ReInitValues ()
 		{
 			NSUserDefaults.StandardUserDefaults.SetString ("", cLastUsedCamper);
 			NSUserDefaults.StandardUserDefaults.SetString ("", cLastUsedCabin);
 		}
 		
-		public void SaveCurrentLogin (string userName, string password)
+		public static void SaveCurrentLogin (string userName, string password)
 		{
 			ReadLoginsFromConfig ();
 			if (loginsDict.Keys.Contains (userName))

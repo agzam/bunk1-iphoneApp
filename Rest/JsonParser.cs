@@ -1,6 +1,8 @@
 using System;
 using System.Json;
 using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Linq;
 
 namespace BunknotesApp
 {
@@ -24,6 +26,15 @@ namespace BunknotesApp
 					};
 			}
 			return null;
+		}
+		
+		public static bool ParseAuthenticationTokenCheck(string jsonString){
+			if (string.IsNullOrWhiteSpace (jsonString))	return false;
+			var jsonOb = JsonValue.Parse (jsonString);
+			if (jsonOb.Count > 0 && jsonOb [0].ContainsKey ("result")){
+				return (jsonOb [0]["result"] == 1);
+			}
+			return false;
 		}
 		
 		public static List<Camper> ParseCampers (string jsonString)
@@ -72,6 +83,25 @@ namespace BunknotesApp
 			}
 			
 			return cabins;
+		}
+		
+		public static CreateBunkNoteResult BunkNoteResult(string jsonString){
+			var jsonOb = JsonValue.Parse (jsonString);
+
+			if (jsonOb.Count > 0 && jsonOb.ContainsKey ("BnResult")) {
+										
+				int res;
+				int.TryParse(jsonOb["BnResult"].ToString(), out res);
+				return (CreateBunkNoteResult) res;
+			}
+			return CreateBunkNoteResult.Error;
+		}
+		
+		public static ImageUploadResult ImageUploadResult(string xmlString){
+			var xmlTree = XElement.Parse(xmlString);
+			var result = xmlTree.Element("Result").Value;
+			var fileName = xmlTree.Element("filename").Value;
+			return new ImageUploadResult(){Success = (result == "2"), Filename = fileName };
 		}
 	}
 }

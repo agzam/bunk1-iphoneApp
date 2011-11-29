@@ -2,7 +2,7 @@ using System;
 using MonoTouch.Dialog;
 using MonoTouch.UIKit;
 using MonoTouch.Foundation;
-using BunknotesApp.Helpers;
+using Bunk1.Helpers;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -11,7 +11,6 @@ namespace BunknotesApp
 	public class ChooseCabinScreen : ControllerBase
 	{
 		private List<Cabin> _cabinsList = new List<Cabin> ();
-		private ConfigurationWorker config = new ConfigurationWorker ();
 
 		public ChooseCabinScreen ()
 		{
@@ -19,17 +18,25 @@ namespace BunknotesApp
 			EnableSearch = true;
 			SearchPlaceholder = "Find bunk";
 			AutoHideSearch = true;
-			
+		}
+		
+		public override void ViewDidAppear (bool animated)
+		{
+			base.ViewDidAppear (animated);
 			_restManager.GetCabins(c => {
+				if (c == null) {
+					SessionExpired();
+					return;
+				}
 				_cabinsList = c;
 				Root = GetRoot ();
-			});	
+			});
 		}
 		
 		public override void Selected (NSIndexPath indexPath)
 		{
 			base.Selected (indexPath);
-			config.LastCabin = _cabinsList [indexPath.Row];
+			ConfigurationWorker.LastCabin = _cabinsList [indexPath.Row];
 			NavigationController.PopViewControllerAnimated(true);
 		}
 		
