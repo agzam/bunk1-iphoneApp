@@ -122,7 +122,6 @@
   <ItemGroup>
     <Content Include="Images\bunk1background.jpg" />
     <Content Include="Images\bunk1background%402x.jpg" />
-    <Content Include="Images\bridge.jpg" />
     <Content Include="Images\camperIcon.png" />
     <Content Include="Images\icon.png" />
     <Content Include="Images\Itunes.png" />

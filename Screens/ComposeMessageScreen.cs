@@ -23,8 +23,6 @@ namespace BunknotesApp
 		public UIBarBtn (UIImage image, UIBarButtonItemStyle style, EventHandler handler):base(image, style, handler)
 		{
 		}
-		
-		//public UIBarBtn():base(){}
 	}
 	
 	public class ComposeMessageScreen : ControllerBase
@@ -54,7 +52,6 @@ namespace BunknotesApp
 				new UIBarBtn (UIBarButtonSystemItem.Camera, CameraTapped) :
 				new UIBarBtn (new UIImage ("Images/camIcon.png"), UIBarButtonItemStyle.Bordered, CameraTapped);
 			
-			//var sendBtn = new UIBarBtn (UIBarButtonSystemItem.Done, DoSend);
 			var sendBtn = new UIBarBtn (new UIImage ("Images/sendBtn.png"), UIBarButtonItemStyle.Bordered, DoSend);
 			var btns = new UIBarButtonItem[]{sendBtn,pickPhotoBtn};
 			NavigationItem.SetRightBarButtonItems (btns, false);
