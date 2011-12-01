@@ -17,7 +17,7 @@ namespace BunknotesApp
 		public int ToX, ToY;
 		public bool PortraitMode;
 		private static List<SunPath> WaysOSun = CreateWaysOSun ();
-		private const int defPortraitX = 67, defPortraitY = 64, defLandscapeX = 242, defLandscapeY = 170;
+		private const int defPortraitX = 75, defPortraitY = 75, defLandscapeX = 242, defLandscapeY = 170;
 
 		public static PointF CurrentSunPosition { get; set; }
 		
@@ -45,7 +45,9 @@ namespace BunknotesApp
 		{
 			return new List<SunPath>{ 
 				new SunPath (1, 287, 427),
-				new SunPath (2, 67, 64)
+				new SunPath (2, defPortraitX, defPortraitY),
+				new SunPath (3, 287, 427),
+				new SunPath (4, defPortraitX, defPortraitY),
 			};
 		}
 	}
@@ -81,25 +83,25 @@ namespace BunknotesApp
 		{
 			var sunImg = new UIImage ("Images/sun.png");
 			sunImageView = new UIImageView (sunImg);
+			sunImageView.Alpha = 0;
 			var imageViews = ParentViewController.View.Subviews.Where (v=> v.GetType() == typeof(UIImageView));
 			foreach (var view in imageViews){
 				if (((UIImageView)view).Image.Size == sunImg.Size){
 					view.RemoveFromSuperview();
+					Console.WriteLine("View removed");
 				}
 			}
 			ParentViewController.View.AddSubview (sunImageView);
 			ParentViewController.View.SendSubviewToBack (sunImageView);	
+			Console.WriteLine("View added");
 			
 			var alpha = (CAKeyFrameAnimation)CAKeyFrameAnimation.FromKeyPath ("opacity");
 			alpha.Values = new NSNumber[]{
 								   NSNumber.FromFloat (0),
                                    NSNumber.FromFloat (1),
                                  };
-			alpha.Duration = 1;
 			
 			var rotation = (CAKeyFrameAnimation)CAKeyFrameAnimation.FromKeyPath ("transform.rotation");
-			rotation.Duration = 1;
-			rotation.TimingFunction = CAMediaTimingFunction.FromName (CAMediaTimingFunction.EaseOut.ToString ()); 
 			rotation.Values = new NSNumber[]{
 								   NSNumber.FromFloat (-3),
                                    NSNumber.FromFloat (0),
@@ -113,18 +115,19 @@ namespace BunknotesApp
 			posPath.AddLineToPoint (toPoint);
 			
 			posAnim.Path = posPath;
-			posAnim.Duration = 0.6;
-			posAnim.TimingFunction = CAMediaTimingFunction.FromName (CAMediaTimingFunction.EaseOut.ToString ()); 
-
-			posAnim.AnimationStopped += delegate {
+			
+			var anGroup = CAAnimationGroup.CreateAnimation ();
+    		anGroup.Animations = new CAAnimation [] { alpha, rotation, posAnim };
+    		anGroup.Duration = 0.5; 
+			anGroup.TimingFunction = CAMediaTimingFunction.FromName (CAMediaTimingFunction.EaseOut.ToString ()); 
+			anGroup.AnimationStopped += delegate {
 				sunImageView.Layer.Position = toPoint;	
 				SunPath.CurrentSunPosition = sunImageView.Layer.Position;
-				//SetBackgroundGradient(interfaceOrientation);
+				sunImageView.Alpha = 1;
 			};
-			sunImageView.Layer.AddAnimation (alpha, "opacity");
-			sunImageView.Layer.AddAnimation (rotation, "rotation");
-			sunImageView.Layer.AddAnimation (posAnim, "position");
 			
+    		sunImageView.Layer.AddAnimation (anGroup, "sun");
+		
 		}
 		
 		void SetBackgroundGradient(UIInterfaceOrientation interfaceOrientation = UIInterfaceOrientation.Portrait){
@@ -159,7 +162,7 @@ namespace BunknotesApp
 			
 			TableView.BackgroundColor = UIColor.Clear;
 			NavigationController.NavigationBar.TintColor = ConfigurationWorker.DefaultNavbarTint;
-			SetBackground (UIInterfaceOrientation.Portrait);
+			//SetBackground (UIInterfaceOrientation.Portrait);
 		}
 		
 		public override void WillAnimateRotation (UIInterfaceOrientation toInterfaceOrientation, double duration)
@@ -172,8 +175,15 @@ namespace BunknotesApp
 		{
 			base.ViewWillAppear (animated);
 			NavigationController.SetNavigationBarHidden (NavBarHidden, animated);
+			SetBackground (NavigationController.InterfaceOrientation);
 		}
 	
+		public override void ViewDidAppear (bool animated)
+		{
+			base.ViewDidAppear (animated);
+			Console.WriteLine("Current controller: "+GetCurrentControllerViewIndex());
+		}
+		
 		public virtual bool Validate ()
 		{
 			return _validator.Validate (this);

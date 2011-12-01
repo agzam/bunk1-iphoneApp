@@ -153,7 +153,7 @@ namespace BunknotesApp
 				callback.Invoke (_cabinsList);
 			
 			string httpLink = string.Format ("Cabins/GetMobileCampCabins/{0}/{1}", auth.CampId, auth.Token);
-			var response = RequestAsync (httpLink, null, "Getting list of campers");
+			var response = RequestAsync (httpLink, null, "Getting list of cabins");
 			response.ContinueWith (t => {
 				_cabinsList = new List<Cabin> ();
 				_cabinsList = JsonParser.ParseCabins (t.Result.Content);

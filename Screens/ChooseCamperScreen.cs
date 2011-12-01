@@ -18,11 +18,16 @@ namespace BunknotesApp
 			EnableSearch = true;
 			SearchPlaceholder = "Find camper";
 			AutoHideSearch = true;
-			
 			EventHandler addBtnClickHandler = (s, a) => NavigationController.PushViewController (new AddNewCamperScreen (), animated:true);
 			var addBtn = new UIBarButtonItem (UIBarButtonSystemItem.Add, addBtnClickHandler);
 			NavigationItem.Title = "Select camper";
 			NavigationItem.SetRightBarButtonItem (addBtn, animated:true);
+		}
+		
+		public override void LoadView ()
+		{
+			base.LoadView ();
+			View.Alpha = 0.7f;
 		}
 		
 		public override void ViewDidAppear (bool animated)

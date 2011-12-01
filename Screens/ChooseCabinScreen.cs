@@ -33,6 +33,12 @@ namespace BunknotesApp
 			});
 		}
 		
+		public override void LoadView ()
+		{
+			base.LoadView ();
+			View.Alpha = 0.7f;
+		}
+		
 		public override void Selected (NSIndexPath indexPath)
 		{
 			base.Selected (indexPath);
