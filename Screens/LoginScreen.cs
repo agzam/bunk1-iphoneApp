@@ -17,7 +17,7 @@ namespace BunknotesApp
 		
 		public LoginScreen ():base(false)
 		{
-			userName = new EntryElement ("Username", "Your user name", ConfigurationWorker.LastUsedUsername);
+			userName = new EntryElement ("Username", "Your username", ConfigurationWorker.LastUsedUsername);
 			NavBarHidden = true;
 			Root = GetRoot ();
 		}
@@ -50,7 +50,7 @@ namespace BunknotesApp
 		public RootElement GetRoot ()
 		{
 			return new RootElement ("Login") {
-				new Section ("Login") {
+				new Section ("Your Bunk1 account") {
 							userName,
 					 		password
 						},
