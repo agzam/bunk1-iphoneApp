@@ -13,7 +13,9 @@ namespace BunknotesApp
 		StyledMultilineElement loggedAsElement; 
 		
 		[Required(ErrorMessage = "You forgot the sender's name")]
-		EntryElement sendFromElement = new EntryElement ("Send from:", "", ConfigurationWorker.SentFrom);
+		EntryElement sendFromElement 
+			= new EntryElement ("Send from:", "", ConfigurationWorker.SentFrom){KeyboardType = UIKeyboardType.Default};
+		
 		string _currentCamperStr;
 		string _currentCabinStr;
 		
@@ -25,10 +27,12 @@ namespace BunknotesApp
 
 		public override void ViewWillAppear (bool animated)
 		{
-			var logAsStr = 
-				String.Format("{0} {1}",string.IsNullOrWhiteSpace(ConfigurationWorker.LastMessage) ? "Welcome" : "Welcome back", ConfigurationWorker.LastUsedUsername);
+			var logAsStr = String.Format("Welcome {0} {1}, you have {2} credits",
+							string.IsNullOrWhiteSpace(ConfigurationWorker.LastMessage) ? "" : "back", 
+							RestManager.AuthenticationResult.FirstName,
+							RestManager.AuthenticationResult.NumberOfCredits);
 			loggedAsElement = new StyledMultilineElement(logAsStr);
-			loggedAsElement.Font = UIFont.SystemFontOfSize(14);
+			loggedAsElement.Font = UIFont.SystemFontOfSize(11);
 			loggedAsElement.TextColor = UIColor.DarkGray;
 			loggedAsElement.Tapped += delegate{
 				NavigationController.PopViewControllerAnimated(animated:true);

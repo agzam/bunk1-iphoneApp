@@ -93,8 +93,8 @@ namespace BunknotesApp
 					var alert = new UIAlertView{ Message = "Bunknote sent succesfully" };
 					alert.AddButton ("OK");
 					alert.Clicked += delegate {
-						var so = NavigationController.ViewControllers.FirstOrDefault (x => x.GetType () == typeof(SendingOptionsScreen));
-						NavigationController.PopToViewController (so, animated:true);	
+						var ls = NavigationController.ViewControllers.FirstOrDefault (x => x.GetType () == typeof(LoginScreen));
+						NavigationController.PopToViewController (ls, animated:true);	
 					};
 					alert.Show ();
 					return;

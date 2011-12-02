@@ -13,11 +13,20 @@ namespace BunknotesApp
 		[Required(ErrorMessage = "Username is required")]
 		private EntryElement userName;
 		[Required(ErrorMessage = "Password is required")]
-		private EntryElement password = new EntryElement ("Password", "Your password", "", isPassword:true);
+		private EntryElement password 
+			= new EntryElement ("Password", "Your password", "", isPassword:true)
+					{KeyboardType = UIKeyboardType.Default, ReturnKeyType= UIReturnKeyType.Go};
 		
 		public LoginScreen ():base(false)
 		{
 			userName = new EntryElement ("Username", "Your username", ConfigurationWorker.LastUsedUsername);
+			userName.KeyboardType = UIKeyboardType.Default;
+			
+			password.ShouldReturn += delegate{
+				DoLogin();
+				return true;
+			};
+			
 			NavBarHidden = true;
 			Root = GetRoot ();
 		}

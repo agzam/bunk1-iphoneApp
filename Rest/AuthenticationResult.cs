@@ -13,6 +13,10 @@ namespace BunknotesApp
 		public int CampId { get; set; }
 
 		public string Token { get; set; }
+		
+		public string FirstName { get; set; }
+		
+		public string NumberOfCredits{ get; set; }
 	}
 }
 

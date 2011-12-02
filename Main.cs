@@ -19,7 +19,7 @@ namespace BunknotesApp
 		
 	public partial class AppDelegate:UIApplicationDelegate
 	{	
-		public event EventHandler AppDidEnterBackground;
+		public event EventHandler AppDidEnterBackground = delegate {};
 		
 		public override void DidEnterBackground (UIApplication application)
 		{

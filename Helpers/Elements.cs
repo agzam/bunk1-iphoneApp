@@ -23,6 +23,5 @@ namespace BunknotesApp
 			return base.GetHeight (tableView, indexPath);
 		} 
 	}	
-	
 }
 

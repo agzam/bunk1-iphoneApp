@@ -22,7 +22,9 @@ namespace BunknotesApp
 			 			CampId = jsonOb [0] ["CampID"],
 				        TypeId = jsonOb [0] ["TypeID"],
 						Result = (ResponseResultType)Enum.ToObject (typeof(ResponseResultType), jsonOb [0] ["Result"]),
-				       	Token = jsonOb [0] ["Token"].ToString ().Replace ("\"", "")
+				       	Token = jsonOb [0] ["Token"].ToString ().Replace ("\"", ""),
+						FirstName = jsonOb [0] ["FirstName"].ToString().Replace ("\"", ""),
+						NumberOfCredits = jsonOb [0] ["NumberOfCredits"].ToString().Replace ("\"", "")
 					};
 			}
 			return null;
