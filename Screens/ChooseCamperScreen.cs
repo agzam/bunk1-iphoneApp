@@ -34,14 +34,20 @@ namespace BunknotesApp
 		{
 			base.ViewDidAppear (animated);
 			
-			_restManager.GetCampers (campers => {
-				if (campers == null) {
-					SessionExpired();
-					return;
-				}
-				_campersList.AddRange (campers);
-				Root = GetRoot ();
-			});	
+			if (_campersList.Count () < 1) {
+				_restManager.GetCampers (campers => {
+					if (campers == null) {
+						SessionExpired ();
+						return;
+					}
+					if (campers.Count() < 1) {
+						NavigationController.PushViewController(new AddNewCamperScreen(),animated:false);
+						MessageBox.Show("There is no registered campers found\nPlease enter the name manually", 1000);
+					}
+					_campersList.AddRange (campers);
+					Root = GetRoot ();
+				});	
+			}
 		}
 		
 		public override void Selected (NSIndexPath indexPath)

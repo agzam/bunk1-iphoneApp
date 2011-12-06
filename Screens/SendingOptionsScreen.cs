@@ -10,42 +10,41 @@ namespace BunknotesApp
 {
 	public class SendingOptionsScreen : ControllerBase
 	{
-		StyledMultilineElement loggedAsElement; 
-		
+		StyledMultilineElement loggedAsElement;
 		[Required(ErrorMessage = "You forgot the sender's name")]
 		EntryElement sendFromElement 
-			= new EntryElement ("Send from:", "", ConfigurationWorker.SentFrom){KeyboardType = UIKeyboardType.Default};
-		
+			= new EntryElement ("Send from:", "", ConfigurationWorker.SentFrom){
+			KeyboardType = UIKeyboardType.Default, 
+			AutocorrectionType = UITextAutocorrectionType.No
+		};
 		string _currentCamperStr;
 		string _currentCabinStr;
-		
 		[Required(ErrorMessage = "Choose camper")]
-		StyledStringElement _chooseCamper; 
+		StyledStringElement _chooseCamper;
 		[Required(ErrorMessage = "Choose cabin")]
 		StyledStringElement _chooseCabin;
-		
 
 		public override void ViewWillAppear (bool animated)
 		{
-			var logAsStr = String.Format("Welcome {0} {1}, you have {2} credits",
-							string.IsNullOrWhiteSpace(ConfigurationWorker.LastMessage) ? "" : "back", 
+			var logAsStr = String.Format ("Welcome {0} {1}, you have {2} credits",
+							string.IsNullOrWhiteSpace (ConfigurationWorker.LastMessage) ? "" : "back", 
 							RestManager.AuthenticationResult.FirstName,
 							RestManager.AuthenticationResult.NumberOfCredits);
-			loggedAsElement = new StyledMultilineElement(logAsStr);
-			loggedAsElement.Font = UIFont.SystemFontOfSize(11);
+			loggedAsElement = new StyledMultilineElement (logAsStr);
+			loggedAsElement.Font = UIFont.SystemFontOfSize (11);
 			loggedAsElement.TextColor = UIColor.DarkGray;
 			loggedAsElement.Tapped += delegate{
-				NavigationController.PopViewControllerAnimated(animated:true);
+				NavigationController.PopViewControllerAnimated (animated:true);
 			};
 			
-			_currentCamperStr = ConfigurationWorker.LastCamper.ToString();
-			_currentCabinStr = ConfigurationWorker.LastCabin.ToString();
+			_currentCamperStr = ConfigurationWorker.LastCamper.ToString ();
+			_currentCabinStr = ConfigurationWorker.LastCabin.ToString ();
 			
-			_chooseCamper = new StyledStringElement ("Camper",_currentCamperStr);
+			_chooseCamper = new StyledStringElement ("Camper", _currentCamperStr);
 			_chooseCamper.Accessory = UITableViewCellAccessory.DisclosureIndicator;
-			_chooseCamper.Tapped += () => NavigationController.PushViewController(new ChooseCamperScreen (), true);
+			_chooseCamper.Tapped += () => NavigationController.PushViewController (new ChooseCamperScreen (), true);
 			
-			_chooseCabin = new StyledStringElement ("Bunk",_currentCabinStr);
+			_chooseCabin = new StyledStringElement ("Bunk", _currentCabinStr);
 			_chooseCabin.Accessory = UITableViewCellAccessory.DisclosureIndicator;
 			_chooseCabin.Tapped += () => NavigationController.PushViewController (new ChooseCabinScreen (), true);
 			Root = GetRoot ();
@@ -53,40 +52,41 @@ namespace BunknotesApp
 			base.ViewWillAppear (animated);
 		}
 		
-		private void ProceedNext(){
-			if (!Validate()) return;
+		private void ProceedNext ()
+		{
+			if (!Validate ())
+				return;
 			ConfigurationWorker.SentFrom = sendFromElement.Value;
-			NavigationController.PushViewController (new ComposeMessageScreen(), animated:true);
+			NavigationController.PushViewController (new ComposeMessageScreen (), animated:true);
 		}
 		
 		public override void DidRotate (UIInterfaceOrientation fromInterfaceOrientation)
 		{
 			base.DidRotate (fromInterfaceOrientation);
-			Root = GetRoot();
+			Root = GetRoot ();
 		}
 		
 		private RootElement GetRoot ()
 		{
-			var lastSection = new Section(){
-				new StyledStringElement("Next", ()=> ProceedNext() )
+			var lastSection = new Section (){
+				new StyledStringElement ("Next", () => ProceedNext ())
 							{ Alignment = UITextAlignment.Center, BackgroundColor = ConfigurationWorker.DefaultBtnColor}
 			};
-			var shift = (this.InterfaceOrientation == UIInterfaceOrientation.Portrait || this.InterfaceOrientation == UIInterfaceOrientation.PortraitUpsideDown) ? 80:0;
-			lastSection.HeaderView = new UIView(new RectangleF(0,0,0,shift));
+			var shift = (this.InterfaceOrientation == UIInterfaceOrientation.Portrait || this.InterfaceOrientation == UIInterfaceOrientation.PortraitUpsideDown) ? 80 : 0;
+			lastSection.HeaderView = new UIView (new RectangleF (0, 0, 0, shift));
+			
+			var toSection = new Section (shift > 0 ? "To:" : "") {
+							_chooseCamper, 
+						};
+			
+			if (ConfigurationWorker.IsThereAtLeast1Cabin) toSection.Add(_chooseCabin);
 			
 			return new RootElement ("Options"){
-						new Section (shift > 0 ? "From:":"") {
+						new Section (shift > 0 ? "From:" : "") {
 							loggedAsElement,
 							sendFromElement
 						},
-						new Section (shift > 0 ? "To:":"") {
-							_chooseCamper, 
-							_chooseCabin
-						},
-//						new Section(){
-//							new StyledStringElement("Next", ()=> ProceedNext() )
-//							{ Alignment = UITextAlignment.Center, BackgroundColor = ConfigurationWorker.DefaultBtnColor}
-//						},
+						toSection,
 						lastSection
 				};	
 		}

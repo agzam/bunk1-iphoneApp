@@ -157,6 +157,7 @@ namespace BunknotesApp
 			response.ContinueWith (t => {
 				_cabinsList = new List<Cabin> ();
 				_cabinsList = JsonParser.ParseCabins (t.Result.Content);
+				ConfigurationWorker.IsThereAtLeast1Cabin = _cabinsList.Count() > 0;
 				callback.Invoke (_cabinsList);
 			}, TaskScheduler.FromCurrentSynchronizationContext ());
 			
@@ -190,6 +191,7 @@ namespace BunknotesApp
 			
 			_cabinsList = new List<Cabin> ();
 			_cabinsList = JsonParser.ParseCabins (task.Result.Content);
+			ConfigurationWorker.IsThereAtLeast1Cabin = _cabinsList.Count() > 0;
 			result = _cabinsList.FirstOrDefault (x => x.Id == cabinId);
 			
 			return result;

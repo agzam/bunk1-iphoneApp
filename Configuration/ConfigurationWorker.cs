@@ -18,6 +18,8 @@ namespace BunknotesApp
 		const string cLastMessage = "LastMessage";
 		const string cUsedCampers = "UsedCampersByCamp";
 		const string cUsedCabins = "UsedCabinsByCamp";
+		const string cAtLeast1Cabin = "IsThereAtLeastOneCabin";
+		
 		private static Dictionary<string, string> loginsDict;
 		private static Dictionary<int, string> usedCampersDict;
 		private static Dictionary<int, string> usedCabinsDict;
@@ -53,7 +55,7 @@ namespace BunknotesApp
 			NSUserDefaults.StandardUserDefaults.Init ();
 		}
 		
-		private static void ReadCampersFromConfig ()
+		private static void ReadUsedCampersFromConfig ()
 		{
 			usedCampersDict = new Dictionary<int, string> ();
 			NSDictionary dic = NSUserDefaults.StandardUserDefaults.DictionaryForKey (cUsedCampers);
@@ -66,7 +68,7 @@ namespace BunknotesApp
 			}
 		}
 		
-		private static void SaveCampersToConfig ()
+		private static void SaveUsedCampersToConfig ()
 		{
 			var campIds = usedCampersDict.Keys.SelectMany (x => new object[] {x.ToString ()}).ToArray ();
 			var camperNames = usedCampersDict.Values.SelectMany (x => new object[] {x}).ToArray ();
@@ -76,7 +78,7 @@ namespace BunknotesApp
 			NSUserDefaults.StandardUserDefaults.Init ();
 		}
 		
-		private static void ReadCabinsFromConfig ()
+		private static void ReadUsedCabinsFromConfig ()
 		{
 			usedCabinsDict = new Dictionary<int, string> ();
 			NSDictionary dic = NSUserDefaults.StandardUserDefaults.DictionaryForKey (cUsedCabins);
@@ -88,7 +90,7 @@ namespace BunknotesApp
 			}
 		}
 		
-		private static void SaveCabinsToConfig ()
+		private static void SaveUsedCabinsToConfig ()
 		{
 			var campIds = usedCabinsDict.Keys.SelectMany (x => new object[] {x.ToString ()}).ToArray ();
 			var cabins = usedCabinsDict.Values.SelectMany (x => new object[] {x}).ToArray ();
@@ -125,7 +127,7 @@ namespace BunknotesApp
 			get {
 				var camper = NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedCamper).Split ('|');
 				if (camper.Length < 2) {
-					ReadCampersFromConfig ();
+					ReadUsedCampersFromConfig ();
 					var campId = RestManager.AuthenticationResult.CampId;
 					if (usedCampersDict.Keys.Contains (campId)) {
 						var dicValue = usedCampersDict [campId].Split ('|');
@@ -143,7 +145,7 @@ namespace BunknotesApp
 					usedCampersDict.Remove (campId);
 				usedCampersDict.Add (campId, val);
 				NSUserDefaults.StandardUserDefaults.SetString (val, cLastUsedCamper);
-				SaveCampersToConfig ();
+				SaveUsedCampersToConfig ();
 			}
 		}
 		
@@ -152,16 +154,18 @@ namespace BunknotesApp
 				var id = NSUserDefaults.StandardUserDefaults.IntForKey (cLastUsedCabinId);
 				var name = NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedCabin);
 				if (string.IsNullOrEmpty (name)) {
-					ReadCabinsFromConfig ();
+					ReadUsedCabinsFromConfig ();
 					var campId = RestManager.AuthenticationResult.CampId;
 					if (usedCabinsDict.Keys.Contains (campId)) {
 						var dicValue = usedCabinsDict [campId].Split ('|');
 						int cabId = 0;
 						if (int.TryParse(dicValue[0], out cabId)) {
+							NSUserDefaults.StandardUserDefaults.SetBool (true, cAtLeast1Cabin);
 							return new Cabin{Id = cabId, Name = dicValue [1]};	
 						}
 					}	
 				}
+				NSUserDefaults.StandardUserDefaults.SetBool (false, cAtLeast1Cabin);
 				return new Cabin{Id = id, Name = name};
 			}
 			set {
@@ -177,7 +181,7 @@ namespace BunknotesApp
 				if (usedCabinsDict.Keys.Contains (campId))
 					usedCabinsDict.Remove (campId);
 				usedCabinsDict.Add (campId, val);
-				SaveCabinsToConfig ();
+				SaveUsedCabinsToConfig ();
 			}
 		}
 		
@@ -187,6 +191,15 @@ namespace BunknotesApp
 			}
 			set {
 				NSUserDefaults.StandardUserDefaults.SetString (value, cSentFrom);
+			}
+		}
+		
+		public static bool IsThereAtLeast1Cabin {
+			get {
+				return NSUserDefaults.StandardUserDefaults.BoolForKey (cAtLeast1Cabin);
+			}
+			set {
+				NSUserDefaults.StandardUserDefaults.SetBool (value, cAtLeast1Cabin);
 			}
 		}
 		
@@ -203,6 +216,7 @@ namespace BunknotesApp
 		{
 			NSUserDefaults.StandardUserDefaults.SetString ("", cLastUsedCamper);
 			NSUserDefaults.StandardUserDefaults.SetString ("", cLastUsedCabin);
+			NSUserDefaults.StandardUserDefaults.SetBool (false, cAtLeast1Cabin);
 		}
 		
 		public static void SaveCurrentLogin (string userName, string password)

@@ -24,27 +24,65 @@ namespace BunknotesApp
 		{
 		}
 	}
+
+	public class UITextViewExt: UITextView
+	{
+		int minimuGestureLength = 5;
+		int maximumVariance = 5;
+		PointF gestureStartPoint;
+		
+		public UITextViewExt ():base(RectangleF.Empty)
+		{
+		}
+		
+		public override void TouchesBegan (NSSet touches, UIEvent evt)
+		{
+			base.TouchesBegan (touches, evt);
+			gestureStartPoint = ((UITouch)touches.AnyObject).LocationInView (this);
+		}
+		
+		public override void TouchesMoved (NSSet touches, UIEvent evt)
+		{
+			base.TouchesMoved (touches, evt);
+			var touch = ((UITouch)touches.AnyObject);
+			PointF currentPosition = touch.LocationInView (this);
+			
+			float deltaX = currentPosition.X - gestureStartPoint.X;
+			float deltaY = currentPosition.Y - gestureStartPoint.Y;
+		
+			if (deltaY >= minimuGestureLength && deltaX <= maximumVariance) {
+				if (this.IsFirstResponder)
+					this.ResignFirstResponder ();
+			}
+		}
+	}
 	
 	public class ComposeMessageScreen : ControllerBase
 	{
 		private bool FromLibrary;
 		private UIImage Picture;
-		private UITextView messageText = new UITextView (RectangleF.Empty);
-		
+		private UITextViewExt messageText = new UITextViewExt ();
+		//private UISwitch replyStationary = new UISwitch();
+		private UIView optionsGroup = new UIView ();
+			
 		public ComposeMessageScreen ()
 		{
-			//this.InterfaceOrientation = UIInterfaceOrientation.Portrait;
 			messageText.Frame = new RectangleF (0, 0, 320, 235);
 			messageText.Font = UIFont.SystemFontOfSize (18);
-			
 			messageText.Changed += (sender, e) => {
 				if (messageText.Text.Length > 1800) {
 					messageText.Text = messageText.Text.Substring (0, 1800);
 				}
 			};
+			
 			AppDelegate.CurrentApp.AppDidEnterBackground += delegate {
 				ConfigurationWorker.LastMessage = messageText.Text;
 			};	
+		}
+		
+		void AddOptionsGroup ()
+		{
+			
 		}
 		
 		void SetUIBarButtons ()
@@ -68,8 +106,8 @@ namespace BunknotesApp
 		
 		public override void ViewWillAppear (bool animated)
 		{
-			View.AddSubview (messageText);
-			messageText.BecomeFirstResponder ();
+			View.AddSubviews (new UIView[]{messageText, optionsGroup});
+			//messageText.BecomeFirstResponder ();
 			PlaceElements (this.InterfaceOrientation);
 			base.ViewWillAppear (animated);
 		}
@@ -88,11 +126,30 @@ namespace BunknotesApp
 		
 		void PlaceElements (UIInterfaceOrientation orientation)
 		{
-			RectangleF rec;
-			rec = (orientation == UIInterfaceOrientation.Portrait || orientation == UIInterfaceOrientation.PortraitUpsideDown)
-				? new RectangleF (0, 0, 320, 235) 
-				: new RectangleF (0, 0, 480, 150);
+			RectangleF rec, rec2;
+			var portrait = (orientation == UIInterfaceOrientation.Portrait || orientation == UIInterfaceOrientation.PortraitUpsideDown);
+			//rec = portrait ? new RectangleF (0, 0, 320, 200) : new RectangleF (0, 0, 480, 110);
+			rec = portrait ? new RectangleF (0, 0, 320, 360) : new RectangleF (0, 0, 480, 110);
+			//rec2 = portrait ? new RectangleF (0, 200, 320, 480) : new RectangleF (0, 110, 480, 320);
+			rec2 = portrait ? new RectangleF (0, 360, 320, 480) : new RectangleF (0, 110, 480, 320);
 			messageText.Frame = rec;
+			optionsGroup.Frame = rec2;
+			
+			UIView back = new UIView(new RectangleF(0,0,500,500));
+			back.BackgroundColor = UIColor.LightGray;
+			back.Alpha = 0.5f;
+			
+			optionsGroup.Add(back);
+			optionsGroup.SendSubviewToBack(back);
+			
+			UILabel replyLabel = new UILabel (new RectangleF (15, 15, 205, 20)){Text = "Add bunk reply stationary"};
+			replyLabel.BackgroundColor = UIColor.Clear;
+			
+			UISwitch replySwitch = new UISwitch (new RectangleF (225, 15, 10, 10));
+			replySwitch.BackgroundColor = UIColor.Clear;
+			
+			optionsGroup.AddSubviews (new UIView[] { replyLabel, replySwitch });
+			
 		}
 		
 		void DoSend (object sender, EventArgs args)

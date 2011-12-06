@@ -26,6 +26,10 @@ namespace Bunk1DataAnnotations
 		public override bool Validate (Object sender)
 		{
 			string val = "";
+			if (sender as Element != null && ((Element)sender).GetActiveCell() == null) {
+				return true;
+			}
+			
 			if ((sender as EntryElement) != null) {
 				((EntryElement) sender).FetchValue ();
 				val = ((EntryElement)sender).Value;
