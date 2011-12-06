@@ -100,7 +100,6 @@ namespace BunknotesApp
 		
 		#endregion
 		
-		
 		#region public members 
 		public static string LastUsedUsername {
 			get {

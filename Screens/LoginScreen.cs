@@ -21,7 +21,11 @@ namespace BunknotesApp
 		{
 			userName = new EntryElement ("Username", "Your username", ConfigurationWorker.LastUsedUsername);
 			userName.KeyboardType = UIKeyboardType.Default;
+			userName.AutocorrectionType = UITextAutocorrectionType.No;
+			userName.AutocapitalizationType = UITextAutocapitalizationType.None;
 			
+			password.AutocorrectionType = UITextAutocorrectionType.No;
+			password.AutocapitalizationType = UITextAutocapitalizationType.None;
 			password.ShouldReturn += delegate{
 				DoLogin();
 				return true;
@@ -49,6 +53,7 @@ namespace BunknotesApp
 				return;
 			
 			_restManager.Authenticate (userName.Value, password.Value, () => {
+				ConfigurationWorker.ReInitValues();
 				ConfigurationWorker.SaveCurrentLogin (userName.Value, password.Value);	
 				ConfigurationWorker.LastUsedUsername = userName.Value;
 				ConfigurationWorker.LastUsedPassword = password.Value;

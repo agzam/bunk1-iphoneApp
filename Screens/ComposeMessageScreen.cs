@@ -31,14 +31,15 @@ namespace BunknotesApp
 		private UIImage Picture;
 		private UITextView messageText = new UITextView (RectangleF.Empty);
 		
-		public ComposeMessageScreen(){
-			
+		public ComposeMessageScreen ()
+		{
+			//this.InterfaceOrientation = UIInterfaceOrientation.Portrait;
 			messageText.Frame = new RectangleF (0, 0, 320, 235);
 			messageText.Font = UIFont.SystemFontOfSize (18);
 			
-			messageText.Changed+= (sender, e) => {
-				if (messageText.Text.Length > 1800){
-					messageText.Text = messageText.Text.Substring(0,1800);
+			messageText.Changed += (sender, e) => {
+				if (messageText.Text.Length > 1800) {
+					messageText.Text = messageText.Text.Substring (0, 1800);
 				}
 			};
 			AppDelegate.CurrentApp.AppDidEnterBackground += delegate {
@@ -61,7 +62,7 @@ namespace BunknotesApp
 		{
 			TableView.ScrollEnabled = false;
 			base.ViewDidLoad ();
-			SetUIBarButtons();
+			SetUIBarButtons ();
 			messageText.Text = ConfigurationWorker.LastMessage;
 		}
 		
@@ -69,6 +70,7 @@ namespace BunknotesApp
 		{
 			View.AddSubview (messageText);
 			messageText.BecomeFirstResponder ();
+			PlaceElements (this.InterfaceOrientation);
 			base.ViewWillAppear (animated);
 		}
 		
@@ -76,6 +78,21 @@ namespace BunknotesApp
 		{
 			ConfigurationWorker.LastMessage = messageText.Text;
 			base.ViewWillDisappear (animated);
+		}
+		
+		public override void WillRotate (UIInterfaceOrientation toInterfaceOrientation, double duration)
+		{
+			base.WillRotate (toInterfaceOrientation, duration);
+			PlaceElements (toInterfaceOrientation);
+		}
+		
+		void PlaceElements (UIInterfaceOrientation orientation)
+		{
+			RectangleF rec;
+			rec = (orientation == UIInterfaceOrientation.Portrait || orientation == UIInterfaceOrientation.PortraitUpsideDown)
+				? new RectangleF (0, 0, 320, 235) 
+				: new RectangleF (0, 0, 480, 150);
+			messageText.Frame = rec;
 		}
 		
 		void DoSend (object sender, EventArgs args)
@@ -122,30 +139,31 @@ namespace BunknotesApp
 			sheet.AddButton ("Pick new picture");
 			sheet.AddButton ("Cancel");
 			sheet.CancelButtonIndex = 2;
+			if (this.InterfaceOrientation == UIInterfaceOrientation.Portrait) {
+				// Dummy buttons to preserve the space for the UIImageView
+				for (int i = 0; i < 4; i++) {
+					sheet.AddButton ("");
+					sheet.Subviews [i + 4].Alpha = 0;
+				}
 			
-			// Dummy buttons to preserve the space for the UIImageView
-			for (int i = 0; i < 4; i++) {
-				sheet.AddButton ("");
-				sheet.Subviews [i + 4].Alpha = 0;
+				var subView = new UIImageView (Picture);
+				subView.ContentMode = UIViewContentMode.ScaleAspectFill;
+				subView.Frame = new RectangleF (23, 185, 275, 210);
+				subView.Layer.CornerRadius = 10;
+				subView.Layer.MasksToBounds = true;
+				subView.Layer.BorderColor = UIColor.Black.CGColor;
+				sheet.AddSubview (subView);
 			}
-			
-			var subView = new UIImageView (Picture);
-			subView.ContentMode = UIViewContentMode.ScaleAspectFill;
-			subView.Frame = new RectangleF (23, 185, 275, 210);
-			subView.Layer.CornerRadius = 10;
-			subView.Layer.MasksToBounds = true;
-			subView.Layer.BorderColor = UIColor.Black.CGColor;
-			sheet.AddSubview (subView);
 			
 			sheet.Clicked += delegate(object ss, UIButtonEventArgs e) {
 				if (e.ButtonIndex == 2)
 					return;
 				
-				if (e.ButtonIndex == 0){
+				if (e.ButtonIndex == 0) {
 					Picture = null;
-					SetUIBarButtons();
-				}
-				else TakePicture ();
+					SetUIBarButtons ();
+				} else
+					TakePicture ();
 			};
 			sheet.ShowInView (this.View);
 			
@@ -236,7 +254,7 @@ namespace BunknotesApp
 			}
 			
 			pictureDict.Dispose ();
-			SetUIBarButtons();
+			SetUIBarButtons ();
 		}
 	}
 }
