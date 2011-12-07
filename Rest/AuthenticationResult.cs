@@ -17,6 +17,8 @@ namespace BunknotesApp
 		public string FirstName { get; set; }
 		
 		public string NumberOfCredits{ get; set; }
+		
+		public bool RepliesOn {get;set;}
 	}
 }
 

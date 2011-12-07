@@ -10,16 +10,16 @@ namespace BunknotesApp
 {
 	public class LoginScreen : ControllerBase
 	{
-		[Required(ErrorMessage = "Username is required")]
+		[Required(ErrorMessage = "username is required")]
 		private EntryElement userName;
-		[Required(ErrorMessage = "Password is required")]
+		[Required(ErrorMessage = "password is required")]
 		private EntryElement password 
-			= new EntryElement ("Password", "Your password", "", isPassword:true)
+			= new EntryElement ("password", "your password", "", isPassword:true)
 					{KeyboardType = UIKeyboardType.Default, ReturnKeyType= UIReturnKeyType.Go};
 		
 		public LoginScreen ():base(false)
 		{
-			userName = new EntryElement ("Username", "Your username", ConfigurationWorker.LastUsedUsername);
+			userName = new EntryElement ("username", "your username", ConfigurationWorker.LastUsedUsername);
 			userName.KeyboardType = UIKeyboardType.Default;
 			userName.AutocorrectionType = UITextAutocorrectionType.No;
 			userName.AutocapitalizationType = UITextAutocapitalizationType.None;
@@ -52,7 +52,7 @@ namespace BunknotesApp
 			if (!Validate ())
 				return;
 			
-			_restManager.Authenticate (userName.Value, password.Value, () => {
+			_restManager.Authenticate (userName.Value, password.Value, "connecting to bunk1", () => {
 				ConfigurationWorker.ReInitValues();
 				ConfigurationWorker.SaveCurrentLogin (userName.Value, password.Value);	
 				ConfigurationWorker.LastUsedUsername = userName.Value;
@@ -63,13 +63,13 @@ namespace BunknotesApp
 
 		public RootElement GetRoot ()
 		{
-			return new RootElement ("Login") {
-				new Section ("Your Bunk1 account") {
+			return new RootElement ("login") {
+				new Section ("your bunk1 account") {
 							userName,
 					 		password
 						},
 						new Section () {
-							new StyledStringElement ("Login", () => DoLogin ()) 
+							new StyledStringElement ("login", () => DoLogin ()) 
 							{ Alignment = UITextAlignment.Center, BackgroundColor =  ConfigurationWorker.DefaultBtnColor }
 						},
 			};

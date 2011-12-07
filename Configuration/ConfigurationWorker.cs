@@ -19,18 +19,15 @@ namespace BunknotesApp
 		const string cUsedCampers = "UsedCampersByCamp";
 		const string cUsedCabins = "UsedCabinsByCamp";
 		const string cAtLeast1Cabin = "IsThereAtLeastOneCabin";
-		
 		private static Dictionary<string, string> loginsDict;
-		private static Dictionary<int, string> usedCampersDict;
-		private static Dictionary<int, string> usedCabinsDict;
+		private static Dictionary<string, string> usedCampersDict = new Dictionary<string, string> ();
+		private static Dictionary<string, string> usedCabinsDict = new Dictionary<string, string> ();
 		public static readonly UIColor DefaultBtnColor = UIColor.FromRGB (242, 201, 136);
 		public static readonly UIColor DefaultNavbarTint = UIColor.FromRGB (222, 165, 60);
 			
 		static ConfigurationWorker ()
 		{
 			loginsDict = new Dictionary<string, string> ();
-			usedCampersDict = new Dictionary<int, string> ();
-			usedCabinsDict = new Dictionary<int, string> ();
 		}
 		
 		#region private methods
@@ -57,14 +54,12 @@ namespace BunknotesApp
 		
 		private static void ReadUsedCampersFromConfig ()
 		{
-			usedCampersDict = new Dictionary<int, string> ();
+			usedCampersDict.Clear();
 			NSDictionary dic = NSUserDefaults.StandardUserDefaults.DictionaryForKey (cUsedCampers);
 			if (dic == null)
 				return;
 			for (int i = 0; i < dic.Count; i++) {
-				int val = 0;
-				if (int.TryParse (dic.Keys [i].ToString (), out val))
-					usedCampersDict.Add (val, dic.Values [i].ToString ());
+				usedCampersDict.Add (dic.Keys [i].ToString (), dic.Values [i].ToString ());
 			}
 		}
 		
@@ -80,13 +75,12 @@ namespace BunknotesApp
 		
 		private static void ReadUsedCabinsFromConfig ()
 		{
-			usedCabinsDict = new Dictionary<int, string> ();
+			usedCabinsDict.Clear();
 			NSDictionary dic = NSUserDefaults.StandardUserDefaults.DictionaryForKey (cUsedCabins);
-			if (dic == null) return;
+			if (dic == null)
+				return;
 			for (int i = 0; i < dic.Count; i++) {
-				int val = 0;
-				if (int.TryParse (dic.Keys [i].ToString (), out val))
-					usedCabinsDict.Add (val, dic.Values [i].ToString ());
+				usedCabinsDict.Add (dic.Keys [i].ToString (), dic.Values [i].ToString ());
 			}
 		}
 		
@@ -128,9 +122,8 @@ namespace BunknotesApp
 				var camper = NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedCamper).Split ('|');
 				if (camper.Length < 2) {
 					ReadUsedCampersFromConfig ();
-					var campId = RestManager.AuthenticationResult.CampId;
-					if (usedCampersDict.Keys.Contains (campId)) {
-						var dicValue = usedCampersDict [campId].Split ('|');
+					if (usedCampersDict.Keys.Contains (UserIdCampIdString)) {
+						var dicValue = usedCampersDict [UserIdCampIdString].Split ('|');
 						return new Camper{FirstName = dicValue [0], LastName = dicValue [1]};
 					}
 				} else {
@@ -139,13 +132,20 @@ namespace BunknotesApp
 				return new Camper ();
 			}
 			set {
-				var campId = RestManager.AuthenticationResult.CampId;
 				var val = value.FirstName + "|" + value.LastName;
-				if (usedCampersDict.Keys.Contains (campId))
-					usedCampersDict.Remove (campId);
-				usedCampersDict.Add (campId, val);
+				if (usedCampersDict.Keys.Contains (UserIdCampIdString))
+					usedCampersDict.Remove (UserIdCampIdString);
+				usedCampersDict.Add (UserIdCampIdString, val);
 				NSUserDefaults.StandardUserDefaults.SetString (val, cLastUsedCamper);
 				SaveUsedCampersToConfig ();
+			}
+		}
+		
+		static string UserIdCampIdString {
+			get {	
+				return string.Format ("{0}|{1}",
+			        RestManager.AuthenticationResult.UserId.ToString (),
+			        RestManager.AuthenticationResult.CampId.ToString ());
 			}
 		}
 		
@@ -155,17 +155,16 @@ namespace BunknotesApp
 				var name = NSUserDefaults.StandardUserDefaults.StringForKey (cLastUsedCabin);
 				if (string.IsNullOrEmpty (name)) {
 					ReadUsedCabinsFromConfig ();
-					var campId = RestManager.AuthenticationResult.CampId;
-					if (usedCabinsDict.Keys.Contains (campId)) {
-						var dicValue = usedCabinsDict [campId].Split ('|');
+					if (usedCabinsDict.Keys.Contains (UserIdCampIdString)) {
+						var dicValue = usedCabinsDict [UserIdCampIdString].Split ('|');
 						int cabId = 0;
-						if (int.TryParse(dicValue[0], out cabId)) {
+						if (int.TryParse (dicValue [0], out cabId)) {
 							NSUserDefaults.StandardUserDefaults.SetBool (true, cAtLeast1Cabin);
 							return new Cabin{Id = cabId, Name = dicValue [1]};	
 						}
 					}	
 				}
-				NSUserDefaults.StandardUserDefaults.SetBool (false, cAtLeast1Cabin);
+				NSUserDefaults.StandardUserDefaults.SetBool (true, cAtLeast1Cabin);
 				return new Cabin{Id = id, Name = name};
 			}
 			set {
@@ -178,9 +177,9 @@ namespace BunknotesApp
 				NSUserDefaults.StandardUserDefaults.SetString (value.Name, cLastUsedCabin);
 				var campId = RestManager.AuthenticationResult.CampId;
 				var val = value.Id.ToString () + "|" + value.Name;
-				if (usedCabinsDict.Keys.Contains (campId))
-					usedCabinsDict.Remove (campId);
-				usedCabinsDict.Add (campId, val);
+				if (usedCabinsDict.Keys.Contains (UserIdCampIdString))
+					usedCabinsDict.Remove (UserIdCampIdString);
+				usedCabinsDict.Add (UserIdCampIdString, val);
 				SaveUsedCabinsToConfig ();
 			}
 		}
@@ -196,7 +195,8 @@ namespace BunknotesApp
 		
 		public static bool IsThereAtLeast1Cabin {
 			get {
-				return NSUserDefaults.StandardUserDefaults.BoolForKey (cAtLeast1Cabin);
+				var res = NSUserDefaults.StandardUserDefaults.BoolForKey (cAtLeast1Cabin);
+				return res;
 			}
 			set {
 				NSUserDefaults.StandardUserDefaults.SetBool (value, cAtLeast1Cabin);

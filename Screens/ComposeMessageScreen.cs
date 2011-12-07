@@ -27,7 +27,7 @@ namespace BunknotesApp
 
 	public class UITextViewExt: UITextView
 	{
-		int minimuGestureLength = 5;
+		int minimuGestureLength = 3;
 		int maximumVariance = 5;
 		PointF gestureStartPoint;
 		
@@ -43,6 +43,8 @@ namespace BunknotesApp
 		
 		public override void TouchesMoved (NSSet touches, UIEvent evt)
 		{
+			if (RestManager.AuthenticationResult != null && !RestManager.AuthenticationResult.RepliesOn)
+				return;
 			base.TouchesMoved (touches, evt);
 			var touch = ((UITouch)touches.AnyObject);
 			PointF currentPosition = touch.LocationInView (this);
@@ -62,9 +64,9 @@ namespace BunknotesApp
 		private bool FromLibrary;
 		private UIImage Picture;
 		private UITextViewExt messageText = new UITextViewExt ();
-		//private UISwitch replyStationary = new UISwitch();
 		private UIView optionsGroup = new UIView ();
-			
+		private bool IsReply = false;
+		
 		public ComposeMessageScreen ()
 		{
 			messageText.Frame = new RectangleF (0, 0, 320, 235);
@@ -101,13 +103,25 @@ namespace BunknotesApp
 			TableView.ScrollEnabled = false;
 			base.ViewDidLoad ();
 			SetUIBarButtons ();
-			messageText.Text = ConfigurationWorker.LastMessage;
+			
+			if (string.IsNullOrWhiteSpace (ConfigurationWorker.LastMessage)) {
+				messageText.Text = "start typing your bunknote";
+				messageText.TextColor = UIColor.FromRGB (218, 218, 218);
+				messageText.Started += delegate {
+					messageText.Text = string.Empty;
+					messageText.TextColor = UIColor.Black;
+					messageText.Started -= delegate{};
+				};
+			} else {
+				messageText.Text = ConfigurationWorker.LastMessage;	
+			}
 		}
 		
 		public override void ViewWillAppear (bool animated)
 		{
 			View.AddSubviews (new UIView[]{messageText, optionsGroup});
-			//messageText.BecomeFirstResponder ();
+			if (RestManager.AuthenticationResult != null && !RestManager.AuthenticationResult.RepliesOn)
+				messageText.BecomeFirstResponder ();
 			PlaceElements (this.InterfaceOrientation);
 			base.ViewWillAppear (animated);
 		}
@@ -128,57 +142,64 @@ namespace BunknotesApp
 		{
 			RectangleF rec, rec2;
 			var portrait = (orientation == UIInterfaceOrientation.Portrait || orientation == UIInterfaceOrientation.PortraitUpsideDown);
-			//rec = portrait ? new RectangleF (0, 0, 320, 200) : new RectangleF (0, 0, 480, 110);
-			rec = portrait ? new RectangleF (0, 0, 320, 360) : new RectangleF (0, 0, 480, 110);
-			//rec2 = portrait ? new RectangleF (0, 200, 320, 480) : new RectangleF (0, 110, 480, 320);
-			rec2 = portrait ? new RectangleF (0, 360, 320, 480) : new RectangleF (0, 110, 480, 320);
+			var yPort = 320;
+			var yLands = 215;
+			rec = portrait ? new RectangleF (0, 0, yPort, 360) : new RectangleF (0, 0, 480, yLands);
+			rec2 = portrait ? new RectangleF (0, 360, yPort, 480) : new RectangleF (0, yLands, 480, 320);
 			messageText.Frame = rec;
 			optionsGroup.Frame = rec2;
 			
-			UIView back = new UIView(new RectangleF(0,0,500,500));
+			UIView back = new UIView (new RectangleF (0, 0, 500, 500));
 			back.BackgroundColor = UIColor.LightGray;
 			back.Alpha = 0.5f;
 			
-			optionsGroup.Add(back);
-			optionsGroup.SendSubviewToBack(back);
+			optionsGroup.Add (back);
+			optionsGroup.SendSubviewToBack (back);
 			
 			UILabel replyLabel = new UILabel (new RectangleF (15, 15, 205, 20)){Text = "Add bunk reply stationary"};
 			replyLabel.BackgroundColor = UIColor.Clear;
 			
 			UISwitch replySwitch = new UISwitch (new RectangleF (225, 15, 10, 10));
+			replySwitch.On = false;
+			replySwitch.ValueChanged += delegate {
+				this.IsReply = replySwitch.On;	
+			};
 			replySwitch.BackgroundColor = UIColor.Clear;
 			
 			optionsGroup.AddSubviews (new UIView[] { replyLabel, replySwitch });
-			
 		}
 		
 		void DoSend (object sender, EventArgs args)
 		{
 			if (string.IsNullOrWhiteSpace (messageText.Text)) { 
-				MessageBox.Show ("Message body cannot be empty");
+				MessageBox.Show ("message body cannot be empty");
 				return;
 			}
 			ConfigurationWorker.LastMessage = messageText.Text;
-			_restManager.SendBunkNote (messageText.Text, Picture, result => {
+			_restManager.SendBunkNote (messageText.Text, Picture, this.IsReply, result => {
 				string message = "";
 				if (result == CreateBunkNoteResult.SentSuccessfully) {
 					ConfigurationWorker.LastMessage = string.Empty;
 					messageText.Text = string.Empty;
-					var alert = new UIAlertView{ Message = "Bunknote sent succesfully" };
-					alert.AddButton ("OK");
-					alert.Clicked += delegate {
-						var ls = NavigationController.ViewControllers.FirstOrDefault (x => x.GetType () == typeof(LoginScreen));
-						NavigationController.PopToViewController (ls, animated:true);	
-					};
-					alert.Show ();
+					_restManager.Authenticate (ConfigurationWorker.LastUsedUsername, ConfigurationWorker.LastUsedPassword, "updating user data", () => {
+						var nextScreen = RestManager.Authenticated ? typeof(SendingOptionsScreen) : typeof(LoginScreen);
+						var alert = new UIAlertView{ Message = "bunknote sent succesfully" };
+						alert.AddButton ("OK");
+						alert.Clicked += delegate {
+							var ls = NavigationController.ViewControllers.FirstOrDefault (x => x.GetType () == nextScreen);
+							NavigationController.PopToViewController (ls, animated:true);	
+						};
+						alert.Show ();
+					});
+					
 					return;
 				} 
 				if (result == CreateBunkNoteResult.Error)
-					message = "Bah, an error has occured!";
+					message = "bah, an error has occured!";
 				if (result == CreateBunkNoteResult.BunkNoteAlreadySent)
-					message = "Your BunkNote has already been sent.";
+					message = "your BunkNote has already been sent.";
 				if (result == CreateBunkNoteResult.HasNotBeenSent)
-					message = "Your Note has NOT been sent.\nYou need to purchase additional credits in order to send.";
+					message = "note has NOT been sent.\nplease purchase\nadditional credits";
 				
 				MessageBox.Show (message);
 			});
@@ -192,9 +213,9 @@ namespace BunknotesApp
 			}
 			
 			var sheet = new UIActionSheet ("");
-			sheet.AddButton ("Discard picture");
-			sheet.AddButton ("Pick new picture");
-			sheet.AddButton ("Cancel");
+			sheet.AddButton ("discard picture");
+			sheet.AddButton ("pick new picture");
+			sheet.AddButton ("cancel");
 			sheet.CancelButtonIndex = 2;
 			if (this.InterfaceOrientation == UIInterfaceOrientation.Portrait) {
 				// Dummy buttons to preserve the space for the UIImageView
@@ -235,9 +256,9 @@ namespace BunknotesApp
 			}
 			
 			var sheet = new UIActionSheet ("");
-			sheet.AddButton ("Take a photo");
-			sheet.AddButton ("From album");
-			sheet.AddButton ("Back");
+			sheet.AddButton ("take a photo");
+			sheet.AddButton ("from album");
+			sheet.AddButton ("back");
 			
 			sheet.CancelButtonIndex = 2;
 			sheet.Clicked += delegate(object sender, UIButtonEventArgs e) {

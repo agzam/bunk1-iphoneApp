@@ -181,7 +181,6 @@ namespace BunknotesApp
 		public override void ViewDidAppear (bool animated)
 		{
 			base.ViewDidAppear (animated);
-			Console.WriteLine("Current controller: "+GetCurrentControllerViewIndex());
 		}
 		
 		public virtual bool Validate ()

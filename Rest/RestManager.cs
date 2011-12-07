@@ -77,7 +77,7 @@ namespace BunknotesApp
 			return task;
 		}
 		
-		public void Authenticate (string username, string password, Action callback)
+		public void Authenticate (string username, string password, string message, Action callback)
 		{
 			if(!Reachability.ConnectionAvailible()) return;
 				
@@ -85,25 +85,25 @@ namespace BunknotesApp
 			RestManager.Authenticated = false;
 			RestManager.AuthenticationResult = null;
 			
-			var request = RequestAsync ("Authentications/CheckBunkNotesMobileAuthentication", parameters, "Connecting to bunk1");
+			var request = RequestAsync ("Authentications/CheckBunkNotesMobileAuthentication", parameters, message);
 			request.ContinueWith (t => {
 				var authResult = JsonParser.ParseAuthenticationString (t.Result.Content);
 				if(authResult == null){
-					MessageBox.Show("Unknown authentication error. Please try again.\nIf error repeats several times\ncontact bunk1 tech support");
+					MessageBox.Show("authentication error.\nplease try again.\nif error repeats several times\ncontact bunk1 tech support");
 					return;
 				}
 				switch (authResult.Result) {
 				case ResponseResultType.BadRequest: 
-					MessageBox.Show ("Invalid Username or Password,\nPlease retry");
+					MessageBox.Show ("invalid username or password,\nplease retry");
 					break;
 				case ResponseResultType.NoCredits: 
-					MessageBox.Show ("We are sorry,\nYour account does not have\nenough credits to send bunknotes");
+					MessageBox.Show ("we are sorry,\nyou do not have\nenough credits to send bunknotes");
 					break;
 				case ResponseResultType.CampBunknoteAccess: 	
-					MessageBox.Show ("We are sorry,\nYour camp currently doesn't allow\nsending bunknotes");
+					MessageBox.Show ("we are sorry,\nyour camp currently doesn't allow\nsending bunknotes");
 					break;
 				case ResponseResultType.UserTypeAccess:
-					MessageBox.Show ("We are sorry,\nYour account type doesn't support\nsending bunknotes");
+					MessageBox.Show ("we are sorry,\nyour account type doesn't support\nsending bunknotes");
 					break;
 				case ResponseResultType.Successful:
 					RestManager.Authenticated = true;
@@ -123,7 +123,7 @@ namespace BunknotesApp
 			var request = new RestRequest (address, Method.GET);
 			var result = JsonParser.ParseAuthenticationTokenCheck(_client.Execute (request).Content);
 			if (!result) {
-				Authenticate(ConfigurationWorker.LastUsedUsername, ConfigurationWorker.LastUsedPassword, null);
+				Authenticate(ConfigurationWorker.LastUsedUsername, ConfigurationWorker.LastUsedPassword, "", null);
 			}
 		}
 		
@@ -136,7 +136,7 @@ namespace BunknotesApp
 				_requestCompleted.Invoke (this, new CampersRequestArgs{campers = _campersList});
 			
 			string httpLink = string.Format ("BunkNotes/GetBnoteUserNameSent/{0}/{1}/{2}", auth.CampId, auth.UserId, auth.Token);
-			var request = RequestAsync (httpLink, null, "Getting list of campers");
+			var request = RequestAsync (httpLink, null, "getting list of campers");
 			request.ContinueWith (t => {
 				_campersList = JsonParser.ParseCampers (t.Result.Content);
 				callback.Invoke (_campersList);
@@ -153,7 +153,7 @@ namespace BunknotesApp
 				callback.Invoke (_cabinsList);
 			
 			string httpLink = string.Format ("Cabins/GetMobileCampCabins/{0}/{1}", auth.CampId, auth.Token);
-			var response = RequestAsync (httpLink, null, "Getting list of cabins");
+			var response = RequestAsync (httpLink, null, "getting list of cabins");
 			response.ContinueWith (t => {
 				_cabinsList = new List<Cabin> ();
 				_cabinsList = JsonParser.ParseCabins (t.Result.Content);
@@ -172,15 +172,17 @@ namespace BunknotesApp
 				throw new InvalidOperationException ();
 			var auth = RestManager.AuthenticationResult;
 			
-			if (_cabinsList != null)
+			if (_cabinsList != null){
 				result = _cabinsList.FirstOrDefault (x => x.Id == cabinId);
-			if (result != null)
-				return result;
-			
+				if (result != null){
+					ConfigurationWorker.IsThereAtLeast1Cabin = true;
+					return result;
+				}
+			}
 			var request = new RestRequest (string.Format ("Cabins/GetMobileCampCabins/{0}/{1}", auth.CampId, auth.Token), Method.GET);
 			
 			ActivityIndicatorAlertView activityIndicator;
-			var thread = new Thread (() => activityIndicator = ActivityIndicatorAlertView.Show ("Getting associated bunk"));
+			var thread = new Thread (() => activityIndicator = ActivityIndicatorAlertView.Show ("getting associated cabin"));
 			thread.Start ();
 			var task = Task<RestResponse>.Factory.StartNew (() => {
 				return _client.Execute (request);});
@@ -191,7 +193,7 @@ namespace BunknotesApp
 			
 			_cabinsList = new List<Cabin> ();
 			_cabinsList = JsonParser.ParseCabins (task.Result.Content);
-			ConfigurationWorker.IsThereAtLeast1Cabin = _cabinsList.Count() > 0;
+			ConfigurationWorker.IsThereAtLeast1Cabin = _cabinsList.Count > 0;
 			result = _cabinsList.FirstOrDefault (x => x.Id == cabinId);
 			
 			return result;
@@ -205,7 +207,7 @@ namespace BunknotesApp
 			request.AddUrlSegment("Token",RestManager.AuthenticationResult.Token);
 			
 			ActivityIndicatorAlertView activityIndicator;
-			var thread = new Thread (() => activityIndicator = ActivityIndicatorAlertView.Show ("Sending the image"));
+			var thread = new Thread (() => activityIndicator = ActivityIndicatorAlertView.Show ("sending the image"));
 			thread.Start ();			
 			ImageUploadResult result = null;
 			
@@ -226,7 +228,7 @@ namespace BunknotesApp
 			return result;
 		}
 		
-		public void SendBunkNote (string messageText, UIImage image, Action<CreateBunkNoteResult> callback)
+		public void SendBunkNote (string messageText, UIImage image, bool isReply, Action<CreateBunkNoteResult> callback)
 		{
 			if(!Reachability.ConnectionAvailible()) return;
 			CheckAuthenticationToken();
@@ -254,12 +256,12 @@ namespace BunknotesApp
 				BnFrom = ConfigurationWorker.SentFrom,
 				BnText = messageText,
 				BnBorder = 0,
-				BnReply = 0,
+				BnReply = isReply ? 1:0,
 				BnImageFilename = imageServerFilename,
 				Token = auth.Token
 			});
 			
-			ActivityIndicatorAlertView activityIndicator = ActivityIndicatorAlertView.Show ("Sending Bunknote");	
+			ActivityIndicatorAlertView activityIndicator = ActivityIndicatorAlertView.Show ("sending bunknote");	
 			
 			var task = Task<RestResponse>.Factory.StartNew (() => {
 				return _client.Execute (request);

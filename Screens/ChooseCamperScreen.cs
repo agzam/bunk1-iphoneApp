@@ -15,12 +15,12 @@ namespace BunknotesApp
 		public ChooseCamperScreen ()
 		{
 			Style = UITableViewStyle.Plain;
-			EnableSearch = true;
-			SearchPlaceholder = "Find camper";
-			AutoHideSearch = true;
+//			EnableSearch = true;
+//			SearchPlaceholder = "Find camper";
+//			AutoHideSearch = true;
 			EventHandler addBtnClickHandler = (s, a) => NavigationController.PushViewController (new AddNewCamperScreen (), animated:true);
 			var addBtn = new UIBarButtonItem (UIBarButtonSystemItem.Add, addBtnClickHandler);
-			NavigationItem.Title = "Select camper";
+			NavigationItem.Title = "select camper";
 			NavigationItem.SetRightBarButtonItem (addBtn, animated:true);
 		}
 		
@@ -41,8 +41,7 @@ namespace BunknotesApp
 						return;
 					}
 					if (campers.Count() < 1) {
-						NavigationController.PushViewController(new AddNewCamperScreen(),animated:false);
-						MessageBox.Show("There is no registered campers found\nPlease enter the name manually", 1000);
+						NavigationController.PushViewController(new AddNewCamperScreen(),animated:true);	
 					}
 					_campersList.AddRange (campers);
 					Root = GetRoot ();
@@ -63,7 +62,7 @@ namespace BunknotesApp
 		
 		private RootElement GetRoot ()
 		{
-			return new RootElement ("Select camper"){
+			return new RootElement ("select camper"){
 				new Section (){
 						from c in _campersList select (Element)new StyledStringElement (c.ToString ())
 					}

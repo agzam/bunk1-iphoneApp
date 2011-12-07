@@ -21,7 +21,7 @@ namespace Bunk1.Helpers
 		public static bool ConnectionAvailible(){
 			if (Reachability.RemoteHostStatus() == NetworkStatus.NotReachable)
 			{
-				MessageBox.Show("This app requires internet connection");
+				MessageBox.Show("this app requires internet connection");
 				return false;
 			}
 			return true;

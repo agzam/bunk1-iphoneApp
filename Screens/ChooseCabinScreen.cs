@@ -15,9 +15,9 @@ namespace BunknotesApp
 		public ChooseCabinScreen ()
 		{
 			Style = UITableViewStyle.Plain;
-			EnableSearch = true;
-			SearchPlaceholder = "Find bunk";
-			AutoHideSearch = true;
+//			EnableSearch = true;
+//			SearchPlaceholder = "Find bunk";
+//			AutoHideSearch = true;
 		}
 		
 		public override void ViewDidAppear (bool animated)
@@ -48,7 +48,7 @@ namespace BunknotesApp
 		
 		private RootElement GetRoot ()
 		{
-			return new RootElement ("Select bunk"){
+			return new RootElement ("select bunk"){
 				new Section (){
 						from c in _cabinsList select (Element)new StyledStringElement (c.ToString())
 					}

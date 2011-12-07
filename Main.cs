@@ -38,8 +38,8 @@ namespace BunknotesApp
 			window.AddSubview (navigation.View);
 			
 			//var loginScreen = new ControllerBase { Autorotate = true };
-			//var loginScreen = new LoginScreen(){ Autorotate = true };
-			var loginScreen = new ComposeMessageScreen{ Autorotate = true };
+			var loginScreen = new LoginScreen(){ Autorotate = true };
+			//var loginScreen = new ComposeMessageScreen{ Autorotate = true };
 			
 			navigation.PushViewController (loginScreen, true);
 			

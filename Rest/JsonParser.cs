@@ -24,7 +24,8 @@ namespace BunknotesApp
 						Result = (ResponseResultType)Enum.ToObject (typeof(ResponseResultType), jsonOb [0] ["Result"]),
 				       	Token = jsonOb [0] ["Token"].ToString ().Replace ("\"", ""),
 						FirstName = jsonOb [0] ["FirstName"].ToString().Replace ("\"", ""),
-						NumberOfCredits = jsonOb [0] ["NumberOfCredits"].ToString().Replace ("\"", "")
+						NumberOfCredits = jsonOb [0] ["NumberOfCredits"].ToString().Replace ("\"", ""),
+						RepliesOn = jsonOb [0] ["repliesON"] == 1
 					};
 			}
 			return null;
