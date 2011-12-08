@@ -24,40 +24,6 @@ namespace BunknotesApp
 		{
 		}
 	}
-
-	public class UITextViewExt: UITextView
-	{
-		int minimuGestureLength = 3;
-		int maximumVariance = 5;
-		PointF gestureStartPoint;
-		
-		public UITextViewExt ():base(RectangleF.Empty)
-		{
-		}
-		
-		public override void TouchesBegan (NSSet touches, UIEvent evt)
-		{
-			base.TouchesBegan (touches, evt);
-			gestureStartPoint = ((UITouch)touches.AnyObject).LocationInView (this);
-		}
-		
-		public override void TouchesMoved (NSSet touches, UIEvent evt)
-		{
-			if (RestManager.AuthenticationResult != null && !RestManager.AuthenticationResult.RepliesOn)
-				return;
-			base.TouchesMoved (touches, evt);
-			var touch = ((UITouch)touches.AnyObject);
-			PointF currentPosition = touch.LocationInView (this);
-			
-			float deltaX = currentPosition.X - gestureStartPoint.X;
-			float deltaY = currentPosition.Y - gestureStartPoint.Y;
-		
-			if (deltaY >= minimuGestureLength && deltaX <= maximumVariance) {
-				if (this.IsFirstResponder)
-					this.ResignFirstResponder ();
-			}
-		}
-	}
 	
 	public class ComposeMessageScreen : ControllerBase
 	{
@@ -66,7 +32,8 @@ namespace BunknotesApp
 		private UITextViewExt messageText = new UITextViewExt ();
 		private UIView optionsGroup = new UIView ();
 		private bool IsReply = false;
-		
+		const string touchHereText = "touch here to start typing your bunknote";
+
 		public ComposeMessageScreen ()
 		{
 			messageText.Frame = new RectangleF (0, 0, 320, 235);
@@ -104,9 +71,10 @@ namespace BunknotesApp
 			base.ViewDidLoad ();
 			SetUIBarButtons ();
 			
-			if (string.IsNullOrWhiteSpace (ConfigurationWorker.LastMessage)) {
-				messageText.Text = "start typing your bunknote";
-				messageText.TextColor = UIColor.FromRGB (218, 218, 218);
+			
+			if (string.IsNullOrWhiteSpace (ConfigurationWorker.LastMessage) || ConfigurationWorker.LastMessage == touchHereText) {
+				messageText.Text = touchHereText;
+				messageText.TextColor = UIColor.FromRGB (210, 210, 210);
 				messageText.Started += delegate {
 					messageText.Text = string.Empty;
 					messageText.TextColor = UIColor.Black;
@@ -156,11 +124,11 @@ namespace BunknotesApp
 			optionsGroup.Add (back);
 			optionsGroup.SendSubviewToBack (back);
 			
-			UILabel replyLabel = new UILabel (new RectangleF (15, 15, 205, 20)){Text = "Add bunk reply stationary"};
+			UILabel replyLabel = new UILabel (new RectangleF (15, 15, 205, 20)){Text = "add bunk reply stationary"};
 			replyLabel.BackgroundColor = UIColor.Clear;
 			
 			UISwitch replySwitch = new UISwitch (new RectangleF (225, 15, 10, 10));
-			replySwitch.On = false;
+			replySwitch.On = IsReply;
 			replySwitch.ValueChanged += delegate {
 				this.IsReply = replySwitch.On;	
 			};

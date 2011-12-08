@@ -2,15 +2,17 @@ using System;
 using MonoTouch.UIKit;
 using MonoTouch.Foundation;
 using System.Drawing;
+using BunknotesApp;
 
 namespace Bunk1.Helpers
 {
 	[Register("ActivityIndicatorAlertView")]
 	public class ActivityIndicatorAlertView : UIAlertView
 	{
-		public static ActivityIndicatorAlertView Show(string message){
+		public static ActivityIndicatorAlertView Show (string message)
+		{
 			var alertView = new ActivityIndicatorAlertView{ Message = message};
-			alertView.Show();
+			alertView.Show ();
 			return alertView;
 		}
 		/// <summary>
@@ -55,6 +57,7 @@ namespace Bunk1.Helpers
 			base.LayoutSubviews ();
 			//----- resize the control
 			this.Frame = new RectangleF (this.Frame.X, this.Frame.Y, this.Frame.Width, 120);
+			Theme ();
 		}
 		
 		/// <summary>
@@ -76,9 +79,9 @@ namespace Bunk1.Helpers
 				}
 				
 				// --- instantiate a new activity indicator
-				this._activityIndicator = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.White);
+				this._activityIndicator = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.Gray);
 				this._activityIndicator.Frame = new RectangleF
-					((rect.Width / 2)-(this._activityIndicator.Frame.Width / 2)
+					((rect.Width / 2) - (this._activityIndicator.Frame.Width / 2)
 						, 50, this._activityIndicator.Frame.Width
 						, this._activityIndicator.Frame.Height);
 				this.AddSubview (this._activityIndicator);
@@ -90,10 +93,43 @@ namespace Bunk1.Helpers
 		/// <summary>
 		/// dismisses the alert view. makes sure to call it to the main UI thread in case it's called from a worker thread
 		/// </summary>
-		public void Hide (bool animated){
-			this.InvokeOnMainThread(delegate {
-				this.DismissWithClickedButtonIndex(0,animated);
+		public void Hide (bool animated)
+		{
+			this.InvokeOnMainThread (delegate {
+				this.DismissWithClickedButtonIndex (0, animated);
 			});
+		}
+		
+		private void Theme ()
+		{
+			var defBlueback = this.GetSubviewElement<UIImageView> ();
+			var label = this.GetSubviewElement<UILabel> ();
+			var button = this.GetSubviewElement<UIButton> ();
+			if (defBlueback != null)
+				defBlueback.Alpha = 0;	
+			if (label != null) {
+				label.TextColor = UIColor.DarkGray;
+				label.ShadowColor = UIColor.Clear;	
+			}
+			if (button != null) {
+				button.BackgroundColor = ConfigurationWorker.DefaultBtnColor;
+				button.Layer.CornerRadius = 6;
+				button.Layer.MasksToBounds = true;
+				var btnLbl = button.GetSubviewElement<UILabel> ();
+				if (btnLbl != null) {
+					btnLbl.TextColor = UIColor.Brown;
+					btnLbl.ShadowColor = UIColor.Clear;	
+				}
+			}
+			var back = new UIImageView (new UIImage ("Images/messageBoxBack.png"));
+			back.Frame = new RectangleF (0, 0, this.Bounds.Width, this.Bounds.Height);
+			back.Layer.CornerRadius = 15;
+			back.Layer.MasksToBounds = true;
+			back.Layer.BorderColor = UIColor.FromRGB (193, 183, 154).CGColor;
+			back.Layer.BorderWidth = 2f;
+			
+			this.AddSubview (back);
+			this.SendSubviewToBack (back);
 		}
 	}
 

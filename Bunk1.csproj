@@ -72,6 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
+    <None Include="Images\Itunes.png" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />
@@ -104,6 +105,8 @@
     <Compile Include="Rest\ImageUploadResult.cs" />
     <Compile Include="Helpers\Reachability.cs" />
     <Compile Include="Helpers\Elements.cs" />
+    <Compile Include="Helpers\UIViewExtenstions.cs" />
+    <Compile Include="Helpers\UITextViewExt.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -122,7 +125,6 @@
   <ItemGroup>
     <Content Include="Images\camperIcon.png" />
     <Content Include="Images\icon.png" />
-    <Content Include="Images\Itunes.png" />
     <Content Include="Images\camIcon.png" />
     <Content Include="Images\camperIcon%402x.png" />
     <Content Include="Images\icon%402x.png" />
@@ -131,11 +133,11 @@
     <Content Include="Images\sendBtn%402x.png" />
     <Content Include="Images\sun.png" />
     <Content Include="Images\sun%402x.png" />
-    <Content Include="Images\testPattern.jpg" />
     <Content Include="Images\background.jpg" />
     <Content Include="Images\background%402x.jpg" />
     <Content Include="Images\backgroundLandscape.jpg" />
     <Content Include="Images\backgroundLandscape%402x.jpg" />
+    <Content Include="Images\messageBoxBack.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MonoTouch.Dialog\MonoTouch.Dialog\MonoTouch.Dialog.csproj">
